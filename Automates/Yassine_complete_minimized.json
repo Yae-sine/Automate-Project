@@ -1,0 +1,332 @@
+{
+    "name": "Yassine_complete_minimized",
+    "alphabet": {
+        "symbols": [
+            "n",
+            "s",
+            "e",
+            "a",
+            "i",
+            "Y"
+        ]
+    },
+    "states": [
+        {
+            "name": "q5_3",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q2_6",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q1_7",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q3_5",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q8_sink",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q4_4",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "q0_8",
+            "is_initial": false,
+            "is_final": true
+        },
+        {
+            "name": "q7_1",
+            "is_initial": true,
+            "is_final": false
+        },
+        {
+            "name": "q6_2",
+            "is_initial": false,
+            "is_final": false
+        }
+    ],
+    "transitions": [
+        {
+            "from_state": "q2_6",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q3_5",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q2_6",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q5_3",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q2_6",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q6_2",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q2_6",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q0_8",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q4_4",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q3_5",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q2_6",
+            "to_state": "q1_7",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q1_7",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q8_sink",
+            "symbol": "n"
+        },
+        {
+            "from_state": "q2_6",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q6_2",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q8_sink",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q7_1",
+            "to_state": "q8_sink",
+            "symbol": "a"
+        },
+        {
+            "from_state": "q2_6",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        },
+        {
+            "from_state": "q5_3",
+            "to_state": "q4_4",
+            "symbol": "s"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "Y"
+        },
+        {
+            "from_state": "q0_8",
+            "to_state": "q8_sink",
+            "symbol": "i"
+        },
+        {
+            "from_state": "q8_sink",
+            "to_state": "q8_sink",
+            "symbol": "e"
+        }
+    ]
+}
