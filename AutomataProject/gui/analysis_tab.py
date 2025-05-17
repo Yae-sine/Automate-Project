@@ -187,10 +187,22 @@ class AnalysisTab(QWidget):
         self.second_automaton_combo.addItem("-- Select Automaton --")
         
         try:
+            # Get all saved automaton names
             automata_names = Automaton.list_saved_automata()
             
             # Filter out empty or invalid names
-            valid_automata = [name for name in automata_names if name and name.strip()]
+            valid_automata = []
+            for name in automata_names:
+                if not name or not name.strip():
+                    continue
+                    
+                # Verify the file actually exists
+                file_path = os.path.join("Automates", f"{name}.json")
+                if not os.path.exists(file_path):
+                    self.log(f"Warning: Listed automaton '{name}' has no file at {file_path}")
+                    continue
+                    
+                valid_automata.append(name)
             
             # Sort alphabetically for better user experience
             for name in sorted(valid_automata):
@@ -221,23 +233,30 @@ class AnalysisTab(QWidget):
             return
             
         try:
-            # Validate that we have a proper name
-            if not os.path.exists(f"Automates/{selected_name}.json"):
-                self.log(f"Error: Automaton file for '{selected_name}' does not exist")
+            # Validate that we have a proper name and file exists
+            file_path = os.path.join("Automates", f"{selected_name}.json")
+            if not os.path.exists(file_path):
+                self.log(f"Error: Automaton file for '{selected_name}' does not exist at path: {file_path}")
                 self.operations_label.setText(f"Error: File not found for {selected_name}")
                 self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
                 self.operation_automaton = None
                 self.update_button_states()
                 return
-                
-            file_path = f"Automates/{selected_name}.json"
-            self.operation_automaton = Automaton.load_from_file(file_path)
-            self.operations_label.setText(f"Operations with: {selected_name}")
-            self.operations_label.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; font-weight: bold; }")
-            self.log(f"Selected second automaton: {selected_name}")
+            
+            # Attempt to load the automaton
+            try:
+                self.operation_automaton = Automaton.load_from_file(file_path)
+                self.operations_label.setText(f"Operations with: {selected_name}")
+                self.operations_label.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; font-weight: bold; }")
+                self.log(f"Selected second automaton: {selected_name}")
+            except Exception as load_error:
+                self.log(f"Error loading automaton '{selected_name}': {str(load_error)}")
+                self.operations_label.setText(f"Error loading: {selected_name}")
+                self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
+                self.operation_automaton = None
         except Exception as e:
-            self.log(f"Error loading automaton '{selected_name}': {str(e)}")
-            self.operations_label.setText(f"Error loading: {selected_name}")
+            self.log(f"Unexpected error with automaton '{selected_name}': {str(e)}")
+            self.operations_label.setText(f"Error with: {selected_name}")
             self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
             self.operation_automaton = None
         
@@ -318,6 +337,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Converting {self.current_automaton.name} to DFA...")
             
             if self.current_automaton.is_deterministic():
@@ -328,6 +348,7 @@ class AnalysisTab(QWidget):
             
             self.log(f"Conversion complete. Result: {self.result_automaton.name}")
             self.log(f"Original states: {len(self.current_automaton.states)}, DFA states: {len(self.result_automaton.states)}")
+            self.log("-"*50)
             
             self.update_button_states()
         except Exception as e:
@@ -340,6 +361,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Making {self.current_automaton.name} complete...")
             
             if self.current_automaton.is_complete():
@@ -350,6 +372,7 @@ class AnalysisTab(QWidget):
             
             self.log(f"Completion successful. Result: {self.result_automaton.name}")
             self.log(f"Original states: {len(self.current_automaton.states)}, Complete automaton states: {len(self.result_automaton.states)}")
+            self.log("-"*50)
             
             self.update_button_states()
         except Exception as e:
@@ -362,6 +385,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Minimizing {self.current_automaton.name}...")
             
             if not self.current_automaton.is_deterministic():
@@ -376,6 +400,7 @@ class AnalysisTab(QWidget):
             
             self.log(f"Minimization successful. Result: {self.result_automaton.name}")
             self.log(f"Original states: {len(self.current_automaton.states)}, Minimized states: {len(self.result_automaton.states)}")
+            self.log("-"*50)
             
             self.update_button_states()
         except Exception as e:
@@ -388,11 +413,13 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Computing complement of {self.current_automaton.name}...")
             
             self.result_automaton = self.current_automaton.get_complement()
             
             self.log(f"Complement computed. Result: {self.result_automaton.name}")
+            self.log("-"*50)
             
             self.update_button_states()
         except Exception as e:
@@ -410,6 +437,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Computing union of {self.current_automaton.name} and {self.operation_automaton.name}...")
             
             # Validate both automata
@@ -420,15 +448,28 @@ class AnalysisTab(QWidget):
             if not self.operation_automaton.states:
                 self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
                 return
+                
+            # Check for compatible alphabets
+            alphabet1 = self.current_automaton.alphabet.symbols
+            alphabet2 = self.operation_automaton.alphabet.symbols
+            combined_alphabet = alphabet1.union(alphabet2)
             
+            self.log(f"Combined alphabet symbols: {', '.join(sorted(combined_alphabet))}")
+            
+            # Perform the union operation
             self.result_automaton = self.current_automaton.union(self.operation_automaton)
             
+            # Log success and details
             self.log(f"Union computed. Result: {self.result_automaton.name}")
             self.log(f"Result has {len(self.result_automaton.states)} states and {len(self.result_automaton.transitions)} transitions")
+            self.log("-"*50)
             
             self.update_button_states()
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             self.log(f"Error computing union: {str(e)}")
+            self.log(f"Error details: {error_details}")
             self.show_message("Error", f"Failed to compute union: {str(e)}")
     
     def intersection(self):
@@ -443,6 +484,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Computing intersection of {self.current_automaton.name} and {self.operation_automaton.name}...")
             
             # Validate both automata
@@ -454,14 +496,34 @@ class AnalysisTab(QWidget):
                 self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
                 return
             
+            # Check for compatible alphabets
+            alphabet1 = self.current_automaton.alphabet.symbols
+            alphabet2 = self.operation_automaton.alphabet.symbols
+            shared_symbols = alphabet1.intersection(alphabet2)
+            
+            if not shared_symbols:
+                self.log(f"Warning: The automata have no common alphabet symbols. Intersection might be empty.")
+            else:
+                self.log(f"Common alphabet symbols: {', '.join(sorted(shared_symbols))}")
+            
+            # Perform the intersection operation
             self.result_automaton = self.current_automaton.intersection(self.operation_automaton)
             
+            # Log success and details
             self.log(f"Intersection computed. Result: {self.result_automaton.name}")
             self.log(f"Result has {len(self.result_automaton.states)} states and {len(self.result_automaton.transitions)} transitions")
             
+            if len(self.result_automaton.states) == 0 or len(self.result_automaton.get_final_states()) == 0:
+                self.log("The intersection appears to be empty (no states or no final states).")
+            
+            self.log("-"*50)
+            
             self.update_button_states()
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             self.log(f"Error computing intersection: {str(e)}")
+            self.log(f"Error details: {error_details}")
             self.show_message("Error", f"Failed to compute intersection: {str(e)}")
     
     def check_equivalence(self):
@@ -476,6 +538,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
             self.log(f"Checking equivalence of {self.current_automaton.name} and {self.operation_automaton.name}...")
             
             # Validate both automata
@@ -486,7 +549,18 @@ class AnalysisTab(QWidget):
             if not self.operation_automaton.states:
                 self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
                 return
+                
+            # Check alphabets
+            alphabet1 = self.current_automaton.alphabet.symbols
+            alphabet2 = self.operation_automaton.alphabet.symbols
             
+            if alphabet1 != alphabet2:
+                self.log(f"Warning: Automata have different alphabets.")
+                self.log(f"A: {', '.join(sorted(alphabet1))}")
+                self.log(f"B: {', '.join(sorted(alphabet2))}")
+                self.log("Alphabets will be unified for equivalence check.")
+            
+            # Perform the equivalence check
             are_equivalent = self.current_automaton.are_equivalent(self.operation_automaton)
             
             if are_equivalent:
@@ -495,8 +569,13 @@ class AnalysisTab(QWidget):
             else:
                 self.log(f"The automata are NOT equivalent")
                 self.show_message("Equivalence Check", f"The automata {self.current_automaton.name} and {self.operation_automaton.name} are NOT equivalent.")
+            
+            self.log("-"*50)
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             self.log(f"Error checking equivalence: {str(e)}")
+            self.log(f"Error details: {error_details}")
             self.show_message("Error", f"Failed to check equivalence: {str(e)}")
     
     def visualize_result(self):
@@ -506,6 +585,9 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
+            self.log(f"Visualizing result automaton: {self.result_automaton.name}")
+            
             # Clear previous visualization
             for i in reversed(range(self.parent.visualization_layout.count())):
                 widget = self.parent.visualization_layout.itemAt(i).widget()
@@ -519,6 +601,9 @@ class AnalysisTab(QWidget):
             # Add to the visualization panel
             self.parent.visualization_layout.addWidget(canvas)
             self.parent.visualization_label.setText(f"Result: {self.result_automaton.name}")
+            
+            self.log("Visualization complete")
+            self.log("-"*50)
         except Exception as e:
             self.log(f"Error visualizing result: {str(e)}")
     
@@ -529,10 +614,14 @@ class AnalysisTab(QWidget):
             return
         
         try:
+            self.log("\n" + "-"*50)
+            self.log(f"Saving result automaton: {self.result_automaton.name}")
+            
             # Save the automaton
             file_path = self.result_automaton.save_to_file()
             self.log(f"Result saved as: {self.result_automaton.name}")
             self.log(f"File: {file_path}")
+            self.log("-"*50)
             
             # Emit signal to refresh list in automaton tab
             self.automaton_created.emit(self.result_automaton)

@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
 import os
+import datetime
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -277,29 +278,48 @@ class WordProcessingTab(QWidget):
             self.display_animation_frame(self.current_frame + 1)
     
     def save_animation(self):
-        """Save all animation frames as images."""
+        """Save all animation frames as images in an organized folder."""
         if not self.animation_frames:
             self.show_message("No Animation", "No animation to save.")
             return
         
-        directory = QFileDialog.getExistingDirectory(
-            self, "Select Directory to Save Animation Frames", "Automates"
+        parent_directory = QFileDialog.getExistingDirectory(
+            self, "Select Directory for Animation", "Automates"
         )
         
-        if directory:
+        if parent_directory:
             try:
                 word = self.word_input.text().strip()
-                base_filename = f"{self.current_automaton.name}_{word}"
+                # Create a specific folder for this animation
+                folder_name = f"{self.current_automaton.name}_{word}_animation"
+                animation_dir = os.path.join(parent_directory, folder_name)
                 
+                # Create the folder if it doesn't exist
+                os.makedirs(animation_dir, exist_ok=True)
+                
+                # Save frames with sequential numbers for easy ordering
                 for i, fig in enumerate(self.animation_frames):
-                    filename = os.path.join(directory, f"{base_filename}_frame{i+1}.png")
+                    # Use padding zeros for proper ordering (01, 02, etc. instead of 1, 2)
+                    frame_number = str(i+1).zfill(2)
+                    filename = os.path.join(animation_dir, f"frame_{frame_number}.png")
                     fig.savefig(filename, bbox_inches='tight')
+                
+                # Create a README file with animation info
+                readme_path = os.path.join(animation_dir, "README.txt")
+                with open(readme_path, "w") as f:
+                    f.write(f"Animation for automaton: {self.current_automaton.name}\n")
+                    f.write(f"Processing word: '{word}'\n")
+                    f.write(f"Total frames: {len(self.animation_frames)}\n")
+                    f.write(f"Created: {os.path.basename(__file__)}\n")
+                    f.write(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 
                 self.show_message(
                     "Animation Saved", 
-                    f"Animation frames saved to {directory}"
+                    f"Animation frames saved to folder:\n{animation_dir}"
                 )
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 self.show_message("Save Error", f"Error saving animation: {str(e)}")
     
     def clear_animation(self):
