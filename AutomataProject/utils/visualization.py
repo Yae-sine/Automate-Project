@@ -1,8 +1,12 @@
 import os
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from matplotlib.patches import FancyArrowPatch
+import matplotlib.colors as mcolors
 from typing import Dict, Set, Optional, Tuple, List, Any
+import colorsys
 
 # Use absolute imports instead of relative imports
 from automata.automaton import Automaton
@@ -12,6 +16,18 @@ from automata.transition import Transition
 # Global dictionary to store node positions for each automaton
 # Key: automaton name, Value: dictionary of node positions
 node_positions = {}
+
+# Enhanced color palette - modern, visually appealing colors
+COLOR_PALETTE = {
+    'regular': '#E0E0E0',       # Light gray for regular states
+    'initial': '#6495ED',       # Cornflower blue for initial states
+    'final': '#FF8C00',         # Dark orange for final states
+    'initial_final': '#20B2AA', # Light sea green for states that are both initial and final
+    'edge': '#2F4F4F',          # Dark slate gray for edges
+    'text': '#000000',          # Black for text
+    'highlight': '#FF4500',     # Orange-red for highlighting
+    'background': '#FFFFFF',    # White background
+}
 
 def create_automaton_graph(automaton: Automaton) -> nx.DiGraph:
     """
@@ -50,7 +66,7 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
                        ax: Optional[plt.Axes] = None, figsize: Tuple[int, int] = (10, 8),
                        reuse_positions: bool = True) -> Figure:
     """
-    Visualize an automaton using networkx and matplotlib.
+    Visualize an automaton using networkx and matplotlib with enhanced visuals.
     
     Args:
         automaton: The automaton to visualize
@@ -66,9 +82,13 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
     
     # Create a new figure if ax is not provided
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=figsize, facecolor=COLOR_PALETTE['background'])
     else:
         fig = ax.figure
+        fig.set_facecolor(COLOR_PALETTE['background'])
+    
+    # Set axis background color
+    ax.set_facecolor(COLOR_PALETTE['background'])
     
     # Generate or reuse node positions
     global node_positions
@@ -80,85 +100,211 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
         if missing_nodes:
             # If there are new nodes, start with existing positions and let networkx position the new ones
             pos = nx.spring_layout(G, pos=stored_positions, fixed=list(stored_positions.keys()),
-                                 k=0.5, iterations=50)
+                                 k=0.5, iterations=100)
             # Update stored positions
             node_positions[automaton.name] = pos
         else:
             # Use stored positions directly
             pos = stored_positions
     else:
-        # Calculate new positions
-        pos = nx.spring_layout(G, k=0.5, iterations=50)
+        # Calculate new positions with better spacing
+        pos = nx.spring_layout(G, k=0.7, iterations=100, seed=42)
         # Store for future use
         node_positions[automaton.name] = pos
     
-    # Draw nodes
+    # Draw nodes with enhanced visuals
     node_colors = []
-    node_shapes = []
-    for node in G.nodes():
-        # Initial and final states are green, initial-only states are blue, 
-        # final-only states are orange, regular states are gray
-        if G.nodes[node]['is_initial'] and G.nodes[node]['is_final']:
-            node_colors.append('green')
-            node_shapes.append('doublecircle')
-        elif G.nodes[node]['is_initial']:
-            node_colors.append('blue')
-            node_shapes.append('circle')
-        elif G.nodes[node]['is_final']:
-            node_colors.append('orange')
-            node_shapes.append('doublecircle')
-        else:
-            node_colors.append('lightgray')
-            node_shapes.append('circle')
+    node_sizes = []
+    node_borders = []
+    border_widths = []
     
-    # Draw normal nodes
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color=node_colors, node_size=700)
+    for node in G.nodes():
+        # Set node properties based on state type
+        if G.nodes[node]['is_initial'] and G.nodes[node]['is_final']:
+            node_colors.append(COLOR_PALETTE['initial_final'])
+            node_borders.append('black')
+            border_widths.append(2.0)
+            node_sizes.append(800)
+        elif G.nodes[node]['is_initial']:
+            node_colors.append(COLOR_PALETTE['initial'])
+            node_borders.append('black')
+            border_widths.append(1.5)
+            node_sizes.append(700)
+        elif G.nodes[node]['is_final']:
+            node_colors.append(COLOR_PALETTE['final'])
+            node_borders.append('black')
+            border_widths.append(2.0)
+            node_sizes.append(750)
+        else:
+            node_colors.append(COLOR_PALETTE['regular'])
+            node_borders.append('gray')
+            border_widths.append(1.0)
+            node_sizes.append(650)
+    
+    # Draw all nodes with a subtle shadow effect
+    for i, (node, color) in enumerate(zip(G.nodes(), node_colors)):
+        # Draw a slightly larger shadow node
+        ax.scatter(pos[node][0], pos[node][1], s=node_sizes[i]+20, 
+                  color=(0,0,0,0.2), zorder=1)
+    
+    # Draw nodes with gradients and shadows
+    nodes = nx.draw_networkx_nodes(G, pos, ax=ax, 
+                                   node_color=node_colors,
+                                   node_size=node_sizes,
+                                   edgecolors=node_borders,
+                                   linewidths=border_widths,
+                                   alpha=1.0)
     
     # Draw double circles for final states
     final_states = [node for node in G.nodes() if G.nodes[node]['is_final']]
     if final_states:
         nx.draw_networkx_nodes(G, pos, ax=ax, nodelist=final_states, 
-                               node_color='none', node_size=800, 
-                               node_shape='o', edgecolors='black', linewidths=2)
+                               node_color='none', node_size=[650 + 100 for _ in final_states], 
+                               node_shape='o', edgecolors='black', linewidths=1.5,
+                               alpha=0.7)
     
-    # Draw node labels
-    nx.draw_networkx_labels(G, pos, ax=ax, font_size=10)
+    # Draw node labels with better font
+    nx.draw_networkx_labels(G, pos, ax=ax, font_size=10, font_family='sans-serif', 
+                           font_weight='bold', font_color=COLOR_PALETTE['text'])
     
-    # Draw edges
-    edge_colors = ['black'] * len(G.edges())
+    # Draw edges with curved style for better visibility
+    # Prepare edge colors and styles
+    edge_colors = []
+    edge_widths = []
+    edge_styles = []
+    edge_alphas = []
     
-    # Highlight path if provided
+    highlight_edges = []
     if highlight_path:
-        for i, (u, v, data) in enumerate(G.edges(data=True)):
-            for from_state, to_state, symbol in highlight_path:
-                if u == from_state and v == to_state and symbol in data['label']:
-                    edge_colors[i] = 'red'
-                    break
+        highlight_edges = [(from_state, to_state) for from_state, to_state, _ in highlight_path]
     
-    nx.draw_networkx_edges(G, pos, ax=ax, width=1.0, arrowsize=20, edge_color=edge_colors)
+    for u, v in G.edges():
+        if (u, v) in highlight_edges:
+            edge_colors.append(COLOR_PALETTE['highlight'])
+            edge_widths.append(2.0)
+            edge_styles.append('solid')
+            edge_alphas.append(1.0)
+        else:
+            edge_colors.append(COLOR_PALETTE['edge'])
+            edge_widths.append(1.0)
+            edge_styles.append('solid')
+            edge_alphas.append(0.8)
     
-    # Draw edge labels
+    # Draw curved edges between nodes
+    curved_edges = []
+    for i, (u, v) in enumerate(G.edges()):
+        # Self-loops need special handling
+        if u == v:
+            rad = 0.3
+            center = pos[u]
+            theta = np.linspace(0, 2*np.pi, 100)
+            circle_radius = 0.05
+            circle_x = center[0] + circle_radius * np.cos(theta)
+            circle_y = center[1] + circle_radius * np.sin(theta)
+            ax.plot(circle_x, circle_y, color=edge_colors[i], linewidth=edge_widths[i], 
+                    linestyle=edge_styles[i], alpha=edge_alphas[i], zorder=1)
+            
+            # Add more prominent arrowhead
+            arrow_idx = len(theta) * 3 // 4
+            dx = circle_x[arrow_idx] - circle_x[arrow_idx-5]
+            dy = circle_y[arrow_idx] - circle_y[arrow_idx-5]
+            arrow = FancyArrowPatch((circle_x[arrow_idx-5], circle_y[arrow_idx-5]),
+                                  (circle_x[arrow_idx], circle_y[arrow_idx]),
+                                  arrowstyle='->', color=edge_colors[i],
+                                  linewidth=edge_widths[i]*1.5, alpha=edge_alphas[i], 
+                                  mutation_scale=15, zorder=3)
+            ax.add_patch(arrow)
+        else:
+            # For parallel edges, we need different curve factors
+            # Check if there's a reverse edge
+            rad = 0.15
+            if G.has_edge(v, u):
+                rad = 0.3
+            
+            # Create the curved edge with more prominent arrow
+            arrow = FancyArrowPatch(pos[u], pos[v], 
+                                  connectionstyle=f'arc3,rad={rad}',
+                                  arrowstyle='->', color=edge_colors[i],
+                                  linewidth=edge_widths[i], alpha=edge_alphas[i],
+                                  mutation_scale=25, shrinkA=5, shrinkB=5, 
+                                  lw=2.0, zorder=1)
+            curved_edges.append(arrow)
+    
+    # Add all curved edges to the plot
+    for arrow in curved_edges:
+        ax.add_patch(arrow)
+    
+    # Draw edge labels with better positioning
     edge_labels = {(u, v): data['label'] for u, v, data in G.edges(data=True)}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax, font_size=8)
+    for (u, v), label in edge_labels.items():
+        # Calculate position for the label
+        if u == v:
+            # Self-loop
+            x, y = pos[u]
+            label_pos = (x, y + 0.15)
+        else:
+            # Standard edge
+            x1, y1 = pos[u]
+            x2, y2 = pos[v]
+            rad = 0.15 if not G.has_edge(v, u) else 0.3
+            
+            # Middle position with some offset
+            label_pos = ((x1 + x2) / 2 + rad * (y2 - y1), 
+                         (y1 + y2) / 2 + rad * (x1 - x2))
+        
+        # Create background for better visibility
+        bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8)
+        
+        # Draw the label
+        ax.text(label_pos[0], label_pos[1], label, size=9, ha='center', va='center',
+               bbox=bbox_props, color='black', zorder=5, fontweight='bold')
     
-    # Draw initial state markers (arrows pointing to initial states)
+    # Draw initial state markers
     for node in G.nodes():
         if G.nodes[node]['is_initial']:
-            # Draw an arrow pointing to the initial state
+            # Draw a nicer arrow pointing to the initial state
             node_pos = pos[node]
-            ax.annotate('', xy=node_pos, xytext=(node_pos[0] - 0.1, node_pos[1]),
-                       arrowprops=dict(arrowstyle="->", lw=1.5))
+            offset = 0.15  # Arrow starting point offset
+            dx, dy = -offset, 0  # Direction for the arrow (from left to right)
+            
+            # Create a fancy arrow
+            start_point = (node_pos[0] + dx - 0.1, node_pos[1] + dy)
+            end_point = (node_pos[0] - 0.02, node_pos[1])
+            
+            # Add a fancy arrow with gradient
+            arrow = FancyArrowPatch(start_point, end_point,
+                                 arrowstyle='->',
+                                 mutation_scale=20,
+                                 linewidth=2,
+                                 color='black',
+                                 zorder=3)
+            ax.add_patch(arrow)
     
-    # Set title and remove axes
-    ax.set_title(f"Automaton: {automaton.name}")
+    # Set title with nice styling
+    ax.set_title(f"Automaton: {automaton.name}", fontsize=14, fontweight='bold', 
+                pad=20, color='#2F4F4F')
+    
+    # Remove axes
     ax.axis('off')
+    
+    # Add a subtle grid in the background
+    ax.grid(False)
+    
+    # Add a light border around the plot area
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color('#DDDDDD')
+        spine.set_linewidth(1)
+    
+    # Ensure proper spacing
+    plt.tight_layout()
     
     return fig
 
 def save_automaton_image(automaton: Automaton, filename: str, directory: str = "Automates", 
                          format: str = "png", **kwargs) -> str:
     """
-    Save an automaton visualization to a file.
+    Save an automaton visualization to a file with enhanced quality.
     
     Args:
         automaton: The automaton to visualize
@@ -181,8 +327,9 @@ def save_automaton_image(automaton: Automaton, filename: str, directory: str = "
     # Create visualization
     fig = visualize_automaton(automaton, **kwargs)
     
-    # Save figure
-    fig.savefig(file_path, format=format, bbox_inches='tight')
+    # Save figure with high DPI for better quality
+    dpi = 300 if format == 'png' else 100
+    fig.savefig(file_path, format=format, bbox_inches='tight', dpi=dpi, facecolor=fig.get_facecolor())
     plt.close(fig)
     
     return file_path
@@ -207,10 +354,15 @@ def animate_word_processing(automaton: Automaton, word: str,
     current_states = automaton._epsilon_closure(automaton.get_initial_states()) if not automaton.is_deterministic() else None
     
     # Initial state
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
     ax = fig.add_subplot(111)
+    ax.set_facecolor(COLOR_PALETTE['background'])
     visualize_automaton(automaton, ax=ax)
-    ax.set_title(f"Initial state: Processing word '{word}'")
+    
+    # Improved title with better styling
+    title = f"Initial state: Processing word '{word}'"
+    ax.set_title(title, fontsize=14, fontweight='bold', color='#2F4F4F')
+    
     frames.append(fig)
     
     # Process each symbol
@@ -225,10 +377,14 @@ def animate_word_processing(automaton: Automaton, word: str,
             next_states = automaton.get_next_states(current_state, symbol)
             if not next_states:
                 # No transition
-                fig = plt.figure(figsize=(10, 8))
+                fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
                 ax = fig.add_subplot(111)
+                ax.set_facecolor(COLOR_PALETTE['background'])
                 visualize_automaton(automaton, highlight_path=path_so_far, ax=ax)
-                ax.set_title(f"No transition for symbol '{symbol}' from state {current_state.name}. Word rejected.")
+                
+                title = f"No transition for symbol '{symbol}' from state {current_state.name}. Word rejected."
+                ax.set_title(title, fontsize=14, fontweight='bold', color='#FF0000')
+                
                 frames.append(fig)
                 break
             
@@ -238,10 +394,14 @@ def animate_word_processing(automaton: Automaton, word: str,
             path_so_far.append((current_state.name, next_state.name, symbol))
             
             # Visualize current step
-            fig = plt.figure(figsize=(10, 8))
+            fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
             ax = fig.add_subplot(111)
+            ax.set_facecolor(COLOR_PALETTE['background'])
             visualize_automaton(automaton, highlight_path=path_so_far, ax=ax)
-            ax.set_title(f"Processed: '{processed_word}', Current state: {next_state.name}")
+            
+            title = f"Processed: '{processed_word}', Current state: {next_state.name}"
+            ax.set_title(title, fontsize=14, fontweight='bold', color='#2F4F4F')
+            
             frames.append(fig)
             
             current_state = next_state
@@ -268,50 +428,67 @@ def animate_word_processing(automaton: Automaton, word: str,
             
             if not next_states_set:
                 # No valid transitions
-                fig = plt.figure(figsize=(10, 8))
+                fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
                 ax = fig.add_subplot(111)
+                ax.set_facecolor(COLOR_PALETTE['background'])
                 visualize_automaton(automaton, highlight_path=path_so_far, ax=ax)
-                ax.set_title(f"No transitions for symbol '{symbol}'. Word rejected.")
+                
+                title = f"No transitions for symbol '{symbol}'. Word rejected."
+                ax.set_title(title, fontsize=14, fontweight='bold', color='#FF0000')
+                
                 frames.append(fig)
                 break
             
             # Visualize current step
-            fig = plt.figure(figsize=(10, 8))
+            fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
             ax = fig.add_subplot(111)
+            ax.set_facecolor(COLOR_PALETTE['background'])
             visualize_automaton(automaton, highlight_path=path_so_far, ax=ax)
+            
             current_states_names = ", ".join(s.name for s in next_states_set)
-            ax.set_title(f"Processed: '{processed_word}', Current states: {current_states_names}")
+            title = f"Processed: '{processed_word}', Current states: {current_states_names}"
+            ax.set_title(title, fontsize=14, fontweight='bold', color='#2F4F4F')
+            
             frames.append(fig)
             
             current_states = next_states_set
     
-    # Final state
+    # Final state with enhanced styling
     if automaton.is_deterministic():
         if current_state.is_final:
             accepted = True
             message = f"Word '{word}' is ACCEPTED. Ended in final state {current_state.name}."
+            title_color = '#008000'  # Green for accepted
         else:
             accepted = False
             message = f"Word '{word}' is REJECTED. Ended in non-final state {current_state.name}."
+            title_color = '#FF0000'  # Red for rejected
     else:
         if any(state.is_final for state in current_states):
             accepted = True
             final_states = [s.name for s in current_states if s.is_final]
             message = f"Word '{word}' is ACCEPTED. Ended in final states: {', '.join(final_states)}."
+            title_color = '#008000'  # Green for accepted
         else:
             accepted = False
             message = f"Word '{word}' is REJECTED. No final states reached."
+            title_color = '#FF0000'  # Red for rejected
     
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(10, 8), facecolor=COLOR_PALETTE['background'])
     ax = fig.add_subplot(111)
+    ax.set_facecolor(COLOR_PALETTE['background'])
     visualize_automaton(automaton, highlight_path=path_so_far, ax=ax)
-    ax.set_title(message, color='green' if accepted else 'red')
+    
+    # Add a background box to the title for emphasis
+    title_bbox = dict(boxstyle="round,pad=0.5", facecolor='white', alpha=0.8, edgecolor=title_color)
+    ax.set_title(message, fontsize=14, fontweight='bold', color=title_color, bbox=title_bbox)
+    
     frames.append(fig)
     
-    # Save frames if requested
+    # Save frames with improved quality if requested
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         for i, fig in enumerate(frames):
-            fig.savefig(f"{save_path}_{i}.png", bbox_inches='tight')
+            fig.savefig(f"{save_path}_{i}.png", bbox_inches='tight', dpi=200, facecolor=fig.get_facecolor())
     
     return frames 
