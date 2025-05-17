@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                           QLabel, QLineEdit, QGroupBox, QTextEdit, QMessageBox,
                           QSpinBox, QListWidget, QFileDialog)
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont
 
 import os
 import matplotlib.pyplot as plt
@@ -25,12 +26,18 @@ class WordProcessingTab(QWidget):
         """Initialize the UI components."""
         # Main layout
         self.layout = QVBoxLayout(self)
+        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(10, 10, 10, 10)
         
         # Word testing section
         self.word_group = QGroupBox("Word Recognition")
+        self.word_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.word_layout = QVBoxLayout(self.word_group)
+        self.word_layout.setContentsMargins(10, 15, 10, 10)
         
         self.word_input_layout = QHBoxLayout()
+        self.word_input_layout.setSpacing(8)
+        
         self.word_input = QLineEdit()
         self.word_input.setPlaceholderText("Enter a word to test")
         
@@ -40,12 +47,24 @@ class WordProcessingTab(QWidget):
         self.animate_word_button = QPushButton("Animate Processing")
         self.animate_word_button.clicked.connect(self.animate_word)
         
-        self.word_input_layout.addWidget(QLabel("Word:"))
-        self.word_input_layout.addWidget(self.word_input)
+        # Simple button styling
+        button_style = "QPushButton { padding: 4px 8px; }"
+        self.test_word_button.setStyleSheet(button_style)
+        self.animate_word_button.setStyleSheet(button_style)
+        
+        word_label = QLabel("Word:")
+        bold_font = QFont()
+        bold_font.setBold(True)
+        word_label.setFont(bold_font)
+        
+        self.word_input_layout.addWidget(word_label)
+        self.word_input_layout.addWidget(self.word_input, 3)  # Give more space to the input
         self.word_input_layout.addWidget(self.test_word_button)
         self.word_input_layout.addWidget(self.animate_word_button)
         
         self.word_result = QLabel("No word tested yet")
+        self.word_result.setAlignment(Qt.AlignCenter)
+        self.word_result.setStyleSheet("QLabel { background-color: #f5f5f5; padding: 5px; border-radius: 3px; }")
         
         self.word_layout.addLayout(self.word_input_layout)
         self.word_layout.addWidget(self.word_result)
@@ -54,7 +73,9 @@ class WordProcessingTab(QWidget):
         
         # Animation controls (initially hidden)
         self.animation_group = QGroupBox("Animation Controls")
+        self.animation_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.animation_layout = QHBoxLayout(self.animation_group)
+        self.animation_layout.setSpacing(8)
         
         self.prev_frame_button = QPushButton("Previous Step")
         self.prev_frame_button.clicked.connect(self.show_prev_frame)
@@ -63,9 +84,16 @@ class WordProcessingTab(QWidget):
         self.next_frame_button.clicked.connect(self.show_next_frame)
         
         self.animation_label = QLabel("Frame 0/0")
+        self.animation_label.setAlignment(Qt.AlignCenter)
+        self.animation_label.setStyleSheet("QLabel { background-color: #f5f5f5; padding: 3px; border-radius: 3px; }")
         
         self.save_animation_button = QPushButton("Save Animation")
         self.save_animation_button.clicked.connect(self.save_animation)
+        
+        # Apply the same button styling
+        self.prev_frame_button.setStyleSheet(button_style)
+        self.next_frame_button.setStyleSheet(button_style)
+        self.save_animation_button.setStyleSheet(button_style)
         
         self.animation_layout.addWidget(self.prev_frame_button)
         self.animation_layout.addWidget(self.animation_label)
@@ -77,35 +105,47 @@ class WordProcessingTab(QWidget):
         
         # Word generation section
         self.generation_group = QGroupBox("Word Generation")
+        self.generation_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.generation_layout = QVBoxLayout(self.generation_group)
+        self.generation_layout.setContentsMargins(10, 15, 10, 10)
         
         self.generation_input_layout = QHBoxLayout()
+        self.generation_input_layout.setSpacing(8)
         
-        self.max_length_label = QLabel("Max Length:")
+        length_label = QLabel("Max Length:")
+        length_label.setFont(bold_font)
+        
         self.max_length_input = QSpinBox()
         self.max_length_input.setRange(1, 10)
         self.max_length_input.setValue(3)
         
         self.generate_button = QPushButton("Generate Words")
         self.generate_button.clicked.connect(self.generate_words)
+        self.generate_button.setStyleSheet(button_style)
         
-        self.generation_input_layout.addWidget(self.max_length_label)
+        self.generation_input_layout.addWidget(length_label)
         self.generation_input_layout.addWidget(self.max_length_input)
         self.generation_input_layout.addWidget(self.generate_button)
+        self.generation_input_layout.addStretch(1)
         
         self.generation_layout.addLayout(self.generation_input_layout)
         
         self.words_list = QListWidget()
+        self.words_list.setAlternatingRowColors(True)
+        self.words_list.setStyleSheet("QListWidget { border: 1px solid #ddd; }")
         self.generation_layout.addWidget(self.words_list)
         
         self.layout.addWidget(self.generation_group)
         
         # Word statistics section
         self.stats_group = QGroupBox("Word Statistics")
+        self.stats_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.stats_layout = QVBoxLayout(self.stats_group)
+        self.stats_layout.setContentsMargins(10, 15, 10, 10)
         
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
+        self.stats_text.setStyleSheet("QTextEdit { border: 1px solid #ddd; }")
         self.stats_layout.addWidget(self.stats_text)
         
         self.layout.addWidget(self.stats_group)
@@ -114,6 +154,7 @@ class WordProcessingTab(QWidget):
         """Set the current automaton for word processing."""
         self.current_automaton = automaton
         self.word_result.setText(f"Automaton: {automaton.name}")
+        self.word_result.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; }")
         self.words_list.clear()
         self.stats_text.clear()
         self.clear_animation()
@@ -135,6 +176,7 @@ class WordProcessingTab(QWidget):
             self.word_result.setText(
                 f"Word contains symbols not in the alphabet: {', '.join(invalid_symbols)}"
             )
+            self.word_result.setStyleSheet("QLabel { background-color: #fff8e1; padding: 5px; border-radius: 3px; color: #856404; }")
             return
         
         # Test the word
@@ -142,10 +184,10 @@ class WordProcessingTab(QWidget):
         
         if accepted:
             self.word_result.setText(f"The word '{word}' is ACCEPTED by the automaton.")
-            self.word_result.setStyleSheet("color: green; font-weight: bold;")
+            self.word_result.setStyleSheet("QLabel { background-color: #e8f5e9; padding: 5px; border-radius: 3px; color: green; font-weight: bold; }")
         else:
             self.word_result.setText(f"The word '{word}' is REJECTED by the automaton.")
-            self.word_result.setStyleSheet("color: red; font-weight: bold;")
+            self.word_result.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; font-weight: bold; }")
     
     def animate_word(self):
         """Animate the processing of a word by the automaton."""
@@ -164,6 +206,7 @@ class WordProcessingTab(QWidget):
             self.word_result.setText(
                 f"Word contains symbols not in the alphabet: {', '.join(invalid_symbols)}"
             )
+            self.word_result.setStyleSheet("QLabel { background-color: #fff8e1; padding: 5px; border-radius: 3px; color: #856404; }")
             return
         
         try:

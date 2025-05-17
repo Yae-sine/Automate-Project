@@ -24,6 +24,9 @@ def main():
     window.editor_tab.automaton_changed.connect(window.analysis_tab.set_current_automaton)
     window.editor_tab.automaton_changed.connect(window.word_processing_tab.set_current_automaton)
     
+    # Connect the analysis tab's automaton_created signal to refresh automaton list
+    window.analysis_tab.automaton_created.connect(window.automaton_tab.refresh_automaton_list)
+    
     # Run application event loop
     sys.exit(app.exec_())
 

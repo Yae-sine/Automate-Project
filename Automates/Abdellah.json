@@ -1,0 +1,103 @@
+{
+    "name": "Abdellah",
+    "alphabet": {
+        "symbols": [
+            "b",
+            "A",
+            "a",
+            "h",
+            "e",
+            "d",
+            "l"
+        ]
+    },
+    "states": [
+        {
+            "name": "2",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "1",
+            "is_initial": true,
+            "is_final": false
+        },
+        {
+            "name": "3",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "7",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "5",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "8",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "6",
+            "is_initial": false,
+            "is_final": false
+        },
+        {
+            "name": "9",
+            "is_initial": false,
+            "is_final": true
+        },
+        {
+            "name": "4",
+            "is_initial": false,
+            "is_final": false
+        }
+    ],
+    "transitions": [
+        {
+            "from_state": "1",
+            "to_state": "2",
+            "symbol": "A"
+        },
+        {
+            "from_state": "4",
+            "to_state": "5",
+            "symbol": "e"
+        },
+        {
+            "from_state": "2",
+            "to_state": "3",
+            "symbol": "b"
+        },
+        {
+            "from_state": "5",
+            "to_state": "6",
+            "symbol": "l"
+        },
+        {
+            "from_state": "7",
+            "to_state": "8",
+            "symbol": "a"
+        },
+        {
+            "from_state": "3",
+            "to_state": "4",
+            "symbol": "d"
+        },
+        {
+            "from_state": "6",
+            "to_state": "7",
+            "symbol": "l"
+        },
+        {
+            "from_state": "8",
+            "to_state": "9",
+            "symbol": "h"
+        }
+    ]
+}

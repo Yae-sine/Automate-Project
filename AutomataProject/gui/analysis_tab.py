@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-                          QLabel, QGroupBox, QTextEdit, QMessageBox, QCheckBox)
+                          QLabel, QGroupBox, QTextEdit, QMessageBox, QCheckBox,
+                          QComboBox)
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont
 
 from automata.automaton import Automaton
 from utils.visualization import visualize_automaton
@@ -17,16 +19,21 @@ class AnalysisTab(QWidget):
         self.parent = parent
         self.current_automaton = None
         self.result_automaton = None
+        self.operation_automaton = None
         self.setup_ui()
     
     def setup_ui(self):
         """Initialize the UI components."""
         # Main layout
         self.layout = QVBoxLayout(self)
+        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(10, 10, 10, 10)
         
         # Status group
         self.status_group = QGroupBox("Automaton Status")
+        self.status_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.status_layout = QVBoxLayout(self.status_group)
+        self.status_layout.setContentsMargins(10, 15, 10, 10)
         
         self.status_label = QLabel("No automaton loaded")
         self.status_layout.addWidget(self.status_label)
@@ -51,24 +58,33 @@ class AnalysisTab(QWidget):
         
         # Transformation group
         self.transform_group = QGroupBox("Transformations")
+        self.transform_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.transform_layout = QVBoxLayout(self.transform_group)
+        self.transform_layout.setContentsMargins(10, 15, 10, 10)
         
         self.transform_buttons = QHBoxLayout()
         
+        # Style all buttons
+        button_style = "QPushButton { padding: 4px 8px; }"
+        
         self.to_dfa_button = QPushButton("Convert to DFA")
         self.to_dfa_button.clicked.connect(self.to_dfa)
+        self.to_dfa_button.setStyleSheet(button_style)
         self.transform_buttons.addWidget(self.to_dfa_button)
         
         self.complete_button = QPushButton("Make Complete")
         self.complete_button.clicked.connect(self.make_complete)
+        self.complete_button.setStyleSheet(button_style)
         self.transform_buttons.addWidget(self.complete_button)
         
         self.minimize_button = QPushButton("Minimize")
         self.minimize_button.clicked.connect(self.minimize)
+        self.minimize_button.setStyleSheet(button_style)
         self.transform_buttons.addWidget(self.minimize_button)
         
         self.complement_button = QPushButton("Complement")
         self.complement_button.clicked.connect(self.complement)
+        self.complement_button.setStyleSheet(button_style)
         self.transform_buttons.addWidget(self.complement_button)
         
         self.transform_layout.addLayout(self.transform_buttons)
@@ -77,23 +93,52 @@ class AnalysisTab(QWidget):
         
         # Operations group
         self.operations_group = QGroupBox("Operations with Another Automaton")
+        self.operations_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.operations_layout = QVBoxLayout(self.operations_group)
+        self.operations_layout.setContentsMargins(10, 15, 10, 10)
         
-        self.operations_label = QLabel("No automaton loaded for operations")
+        # Add selector for second automaton
+        self.selector_layout = QHBoxLayout()
+        
+        bold_font = QFont()
+        bold_font.setBold(True)
+        
+        self.second_automaton_label = QLabel("Select second automaton:")
+        self.second_automaton_label.setFont(bold_font)
+        self.selector_layout.addWidget(self.second_automaton_label)
+        
+        self.second_automaton_combo = QComboBox()
+        self.second_automaton_combo.setStyleSheet("QComboBox { padding: 4px; border: 1px solid #ccc; border-radius: 3px; }")
+        self.second_automaton_combo.currentIndexChanged.connect(self.on_second_automaton_selected)
+        self.selector_layout.addWidget(self.second_automaton_combo, 1)
+        
+        self.refresh_automata_button = QPushButton("Refresh List")
+        self.refresh_automata_button.setStyleSheet(button_style)
+        self.refresh_automata_button.clicked.connect(self.refresh_automata_list)
+        self.selector_layout.addWidget(self.refresh_automata_button)
+        
+        self.operations_layout.addLayout(self.selector_layout)
+        
+        self.operations_label = QLabel("No automaton selected for operations")
+        self.operations_label.setAlignment(Qt.AlignCenter)
+        self.operations_label.setStyleSheet("QLabel { background-color: #f5f5f5; padding: 5px; border-radius: 3px; }")
         self.operations_layout.addWidget(self.operations_label)
         
         self.operations_buttons = QHBoxLayout()
         
         self.union_button = QPushButton("Union")
         self.union_button.clicked.connect(self.union)
+        self.union_button.setStyleSheet(button_style)
         self.operations_buttons.addWidget(self.union_button)
         
         self.intersection_button = QPushButton("Intersection")
         self.intersection_button.clicked.connect(self.intersection)
+        self.intersection_button.setStyleSheet(button_style)
         self.operations_buttons.addWidget(self.intersection_button)
         
         self.equivalence_button = QPushButton("Check Equivalence")
         self.equivalence_button.clicked.connect(self.check_equivalence)
+        self.equivalence_button.setStyleSheet(button_style)
         self.operations_buttons.addWidget(self.equivalence_button)
         
         self.operations_layout.addLayout(self.operations_buttons)
@@ -102,10 +147,13 @@ class AnalysisTab(QWidget):
         
         # Console/log
         self.log_group = QGroupBox("Operation Log")
+        self.log_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self.log_layout = QVBoxLayout(self.log_group)
+        self.log_layout.setContentsMargins(10, 15, 10, 10)
         
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
+        self.log_text.setStyleSheet("QTextEdit { border: 1px solid #ddd; font-family: Consolas, Monaco, monospace; }")
         self.log_layout.addWidget(self.log_text)
         
         self.layout.addWidget(self.log_group)
@@ -116,14 +164,59 @@ class AnalysisTab(QWidget):
         self.visualize_result_button = QPushButton("Visualize Result")
         self.visualize_result_button.clicked.connect(self.visualize_result)
         self.visualize_result_button.setEnabled(False)
+        self.visualize_result_button.setStyleSheet(button_style)
         self.result_actions.addWidget(self.visualize_result_button)
         
         self.save_result_button = QPushButton("Save Result as New Automaton")
         self.save_result_button.clicked.connect(self.save_result)
         self.save_result_button.setEnabled(False)
+        self.save_result_button.setStyleSheet(button_style)
         self.result_actions.addWidget(self.save_result_button)
         
         self.layout.addLayout(self.result_actions)
+        
+        # Initialize the automata list
+        self.refresh_automata_list()
+    
+    def refresh_automata_list(self):
+        """Refresh the list of available automata for operations."""
+        current_selection = self.second_automaton_combo.currentText()
+        
+        self.second_automaton_combo.clear()
+        self.second_automaton_combo.addItem("-- Select Automaton --")
+        
+        automata_names = Automaton.list_saved_automata()
+        for name in sorted(automata_names):
+            if self.current_automaton is None or name != self.current_automaton.name:
+                self.second_automaton_combo.addItem(name)
+        
+        # Restore previous selection if possible
+        if current_selection:
+            index = self.second_automaton_combo.findText(current_selection)
+            if index >= 0:
+                self.second_automaton_combo.setCurrentIndex(index)
+    
+    def on_second_automaton_selected(self):
+        """Handle selection of second automaton from dropdown."""
+        selected_name = self.second_automaton_combo.currentText()
+        if selected_name == "-- Select Automaton --":
+            self.operation_automaton = None
+            self.operations_label.setText("No automaton selected for operations")
+            self.operations_label.setStyleSheet("QLabel { background-color: #f5f5f5; padding: 5px; border-radius: 3px; }")
+        else:
+            try:
+                file_path = f"Automates/{selected_name}.json"
+                self.operation_automaton = Automaton.load_from_file(file_path)
+                self.operations_label.setText(f"Operations with: {selected_name}")
+                self.operations_label.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; font-weight: bold; }")
+                self.log(f"Selected second automaton: {selected_name}")
+            except Exception as e:
+                self.log(f"Error loading automaton {selected_name}: {str(e)}")
+                self.operations_label.setText(f"Error loading: {selected_name}")
+                self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
+                self.operation_automaton = None
+        
+        self.update_button_states()
     
     def set_current_automaton(self, automaton):
         """Set the current automaton for analysis."""
@@ -131,20 +224,13 @@ class AnalysisTab(QWidget):
         self.update_status()
         
         self.log_text.clear()
-        self.log("Loaded automaton: " + automaton.name)
+        self.log(f"Loaded automaton: {automaton.name}")
+        
+        # Refresh second automaton dropdown to exclude current automaton
+        self.refresh_automata_list()
         
         # Enable/disable buttons
         self.update_button_states()
-    
-    def set_operation_automaton(self, automaton):
-        """Set the automaton for binary operations."""
-        self.operation_automaton = automaton
-        self.operations_label.setText(f"Operations with: {automaton.name}")
-        
-        # Enable operations buttons
-        self.union_button.setEnabled(True)
-        self.intersection_button.setEnabled(True)
-        self.equivalence_button.setEnabled(True)
     
     def update_status(self):
         """Update status information about the current automaton."""
@@ -191,7 +277,7 @@ class AnalysisTab(QWidget):
         self.save_result_button.setEnabled(self.result_automaton is not None)
         
         # Operations buttons (need both automata)
-        has_both = hasattr(self, 'operation_automaton') and self.operation_automaton is not None
+        has_both = self.operation_automaton is not None
         self.union_button.setEnabled(has_automaton and has_both)
         self.intersection_button.setEnabled(has_automaton and has_both)
         self.equivalence_button.setEnabled(has_automaton and has_both)
@@ -207,7 +293,7 @@ class AnalysisTab(QWidget):
             return
         
         try:
-            start_time = self.log(f"Converting {self.current_automaton.name} to DFA...")
+            self.log(f"Converting {self.current_automaton.name} to DFA...")
             
             if self.current_automaton.is_deterministic():
                 self.log("Automaton is already a DFA. No conversion needed.")
@@ -254,20 +340,16 @@ class AnalysisTab(QWidget):
             self.log(f"Minimizing {self.current_automaton.name}...")
             
             if not self.current_automaton.is_deterministic():
-                self.log("Converting to DFA first...")
-                automaton = self.current_automaton.to_deterministic()
-                self.log("DFA conversion complete.")
-            else:
-                automaton = self.current_automaton
+                self.log("Cannot minimize non-deterministic automaton. Convert to DFA first.")
+                return
             
-            if not automaton.is_complete():
-                self.log("Making automaton complete first...")
-                automaton = automaton.complete()
-                self.log("Completion successful.")
+            if self.current_automaton.is_minimal():
+                self.log("Automaton is already minimal. No changes needed.")
+                return
             
-            self.result_automaton = automaton.minimize()
+            self.result_automaton = self.current_automaton.minimize()
             
-            self.log(f"Minimization complete. Result: {self.result_automaton.name}")
+            self.log(f"Minimization successful. Result: {self.result_automaton.name}")
             self.log(f"Original states: {len(self.current_automaton.states)}, Minimized states: {len(self.result_automaton.states)}")
             
             self.update_button_states()
@@ -275,7 +357,7 @@ class AnalysisTab(QWidget):
             self.log(f"Error minimizing automaton: {str(e)}")
     
     def complement(self):
-        """Get the complement of the current automaton."""
+        """Compute the complement of the current automaton."""
         if not self.current_automaton:
             self.log("No automaton loaded")
             return
@@ -285,15 +367,15 @@ class AnalysisTab(QWidget):
             
             self.result_automaton = self.current_automaton.get_complement()
             
-            self.log(f"Complement computation complete. Result: {self.result_automaton.name}")
+            self.log(f"Complement computed. Result: {self.result_automaton.name}")
             
             self.update_button_states()
         except Exception as e:
             self.log(f"Error computing complement: {str(e)}")
     
     def union(self):
-        """Compute the union of current and operation automata."""
-        if not self.current_automaton or not hasattr(self, 'operation_automaton') or not self.operation_automaton:
+        """Compute the union of the current automaton with another one."""
+        if not self.current_automaton or not self.operation_automaton:
             self.log("Need two automata for union operation")
             return
         
@@ -302,15 +384,16 @@ class AnalysisTab(QWidget):
             
             self.result_automaton = self.current_automaton.union(self.operation_automaton)
             
-            self.log(f"Union computation complete. Result: {self.result_automaton.name}")
+            self.log(f"Union computed. Result: {self.result_automaton.name}")
+            self.log(f"Result has {len(self.result_automaton.states)} states and {len(self.result_automaton.transitions)} transitions")
             
             self.update_button_states()
         except Exception as e:
             self.log(f"Error computing union: {str(e)}")
     
     def intersection(self):
-        """Compute the intersection of current and operation automata."""
-        if not self.current_automaton or not hasattr(self, 'operation_automaton') or not self.operation_automaton:
+        """Compute the intersection of the current automaton with another one."""
+        if not self.current_automaton or not self.operation_automaton:
             self.log("Need two automata for intersection operation")
             return
         
@@ -319,16 +402,17 @@ class AnalysisTab(QWidget):
             
             self.result_automaton = self.current_automaton.intersection(self.operation_automaton)
             
-            self.log(f"Intersection computation complete. Result: {self.result_automaton.name}")
+            self.log(f"Intersection computed. Result: {self.result_automaton.name}")
+            self.log(f"Result has {len(self.result_automaton.states)} states and {len(self.result_automaton.transitions)} transitions")
             
             self.update_button_states()
         except Exception as e:
             self.log(f"Error computing intersection: {str(e)}")
     
     def check_equivalence(self):
-        """Check if the current and operation automata are equivalent."""
-        if not self.current_automaton or not hasattr(self, 'operation_automaton') or not self.operation_automaton:
-            self.log("Need two automata to check equivalence")
+        """Check if the current automaton is equivalent to another one."""
+        if not self.current_automaton or not self.operation_automaton:
+            self.log("Need two automata for equivalence check")
             return
         
         try:
@@ -337,9 +421,11 @@ class AnalysisTab(QWidget):
             are_equivalent = self.current_automaton.are_equivalent(self.operation_automaton)
             
             if are_equivalent:
-                self.log("Automata are EQUIVALENT (they accept the same language)")
+                self.log(f"The automata are EQUIVALENT")
+                self.show_message("Equivalence Check", f"The automata {self.current_automaton.name} and {self.operation_automaton.name} are EQUIVALENT.")
             else:
-                self.log("Automata are NOT EQUIVALENT (they accept different languages)")
+                self.log(f"The automata are NOT equivalent")
+                self.show_message("Equivalence Check", f"The automata {self.current_automaton.name} and {self.operation_automaton.name} are NOT equivalent.")
         except Exception as e:
             self.log(f"Error checking equivalence: {str(e)}")
     
@@ -362,25 +448,27 @@ class AnalysisTab(QWidget):
             
             # Add to the visualization panel
             self.parent.visualization_layout.addWidget(canvas)
-            self.parent.visualization_label.setText(f"Result Automaton: {self.result_automaton.name}")
+            self.parent.visualization_label.setText(f"Result: {self.result_automaton.name}")
         except Exception as e:
             self.log(f"Error visualizing result: {str(e)}")
     
     def save_result(self):
-        """Save the result automaton as a new automaton."""
+        """Save the result automaton."""
         if not self.result_automaton:
             self.log("No result automaton to save")
             return
         
         try:
+            # Save the automaton
             file_path = self.result_automaton.save_to_file()
-            self.log(f"Saved result automaton to {file_path}")
+            self.log(f"Result saved as: {self.result_automaton.name}")
+            self.log(f"File: {file_path}")
             
+            # Emit signal to refresh list in automaton tab
             self.automaton_created.emit(self.result_automaton)
             
-            # Refresh automata list in the Automaton tab
-            if hasattr(self.parent, 'automaton_tab'):
-                self.parent.automaton_tab.refresh_automaton_list()
+            # Refresh the second automaton dropdown
+            self.refresh_automata_list()
         except Exception as e:
             self.log(f"Error saving result: {str(e)}")
     
