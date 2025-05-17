@@ -164,7 +164,7 @@ class MainWindow(QMainWindow):
         
         if file_path:
             format_type = "png" if selected_filter == "PNG (*.png)" else "svg"
-            from ..utils.visualization import save_automaton_image
+            from utils.visualization import save_automaton_image
             save_automaton_image(current_automaton, file_path, format=format_type)
             self.statusBar().showMessage(f"Image exported to {file_path}")
     

@@ -27,8 +27,8 @@ def main():
     # Connect the analysis tab's automaton_created signal to refresh automaton list
     window.analysis_tab.automaton_created.connect(window.automaton_tab.refresh_automaton_list)
     
-    # Run application event loop
-    sys.exit(app.exec_())
+    # Run application event loop with exec() instead of exec_()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main() 

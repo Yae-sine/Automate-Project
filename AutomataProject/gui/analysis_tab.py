@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                           QComboBox)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
+import os
 
 from automata.automaton import Automaton
 from utils.visualization import visualize_automaton
@@ -185,10 +186,23 @@ class AnalysisTab(QWidget):
         self.second_automaton_combo.clear()
         self.second_automaton_combo.addItem("-- Select Automaton --")
         
-        automata_names = Automaton.list_saved_automata()
-        for name in sorted(automata_names):
-            if self.current_automaton is None or name != self.current_automaton.name:
-                self.second_automaton_combo.addItem(name)
+        try:
+            automata_names = Automaton.list_saved_automata()
+            
+            # Filter out empty or invalid names
+            valid_automata = [name for name in automata_names if name and name.strip()]
+            
+            # Sort alphabetically for better user experience
+            for name in sorted(valid_automata):
+                # Skip the current automaton (can't perform operations with itself)
+                if self.current_automaton is None or name != self.current_automaton.name:
+                    self.second_automaton_combo.addItem(name)
+                    
+            # If no automata available besides the current one, inform the user
+            if self.second_automaton_combo.count() <= 1:
+                self.log("No other automata available for operations. Create or load more automata.")
+        except Exception as e:
+            self.log(f"Error refreshing automata list: {str(e)}")
         
         # Restore previous selection if possible
         if current_selection:
@@ -199,22 +213,33 @@ class AnalysisTab(QWidget):
     def on_second_automaton_selected(self):
         """Handle selection of second automaton from dropdown."""
         selected_name = self.second_automaton_combo.currentText()
-        if selected_name == "-- Select Automaton --":
+        if selected_name == "-- Select Automaton --" or not selected_name or selected_name.strip() == "":
             self.operation_automaton = None
             self.operations_label.setText("No automaton selected for operations")
             self.operations_label.setStyleSheet("QLabel { background-color: #f5f5f5; padding: 5px; border-radius: 3px; }")
-        else:
-            try:
-                file_path = f"Automates/{selected_name}.json"
-                self.operation_automaton = Automaton.load_from_file(file_path)
-                self.operations_label.setText(f"Operations with: {selected_name}")
-                self.operations_label.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; font-weight: bold; }")
-                self.log(f"Selected second automaton: {selected_name}")
-            except Exception as e:
-                self.log(f"Error loading automaton {selected_name}: {str(e)}")
-                self.operations_label.setText(f"Error loading: {selected_name}")
+            self.update_button_states()
+            return
+            
+        try:
+            # Validate that we have a proper name
+            if not os.path.exists(f"Automates/{selected_name}.json"):
+                self.log(f"Error: Automaton file for '{selected_name}' does not exist")
+                self.operations_label.setText(f"Error: File not found for {selected_name}")
                 self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
                 self.operation_automaton = None
+                self.update_button_states()
+                return
+                
+            file_path = f"Automates/{selected_name}.json"
+            self.operation_automaton = Automaton.load_from_file(file_path)
+            self.operations_label.setText(f"Operations with: {selected_name}")
+            self.operations_label.setStyleSheet("QLabel { background-color: #e8f0fe; padding: 5px; border-radius: 3px; font-weight: bold; }")
+            self.log(f"Selected second automaton: {selected_name}")
+        except Exception as e:
+            self.log(f"Error loading automaton '{selected_name}': {str(e)}")
+            self.operations_label.setText(f"Error loading: {selected_name}")
+            self.operations_label.setStyleSheet("QLabel { background-color: #ffebee; padding: 5px; border-radius: 3px; color: red; }")
+            self.operation_automaton = None
         
         self.update_button_states()
     
@@ -375,12 +400,26 @@ class AnalysisTab(QWidget):
     
     def union(self):
         """Compute the union of the current automaton with another one."""
-        if not self.current_automaton or not self.operation_automaton:
-            self.log("Need two automata for union operation")
+        if not self.current_automaton:
+            self.log("No automaton loaded")
+            return
+            
+        if not self.operation_automaton:
+            self.log("No second automaton selected for union operation")
+            self.show_message("Missing Automaton", "Please select a second automaton for the union operation")
             return
         
         try:
             self.log(f"Computing union of {self.current_automaton.name} and {self.operation_automaton.name}...")
+            
+            # Validate both automata
+            if not self.current_automaton.states:
+                self.log(f"Error: The current automaton '{self.current_automaton.name}' has no states")
+                return
+                
+            if not self.operation_automaton.states:
+                self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
+                return
             
             self.result_automaton = self.current_automaton.union(self.operation_automaton)
             
@@ -390,15 +429,30 @@ class AnalysisTab(QWidget):
             self.update_button_states()
         except Exception as e:
             self.log(f"Error computing union: {str(e)}")
+            self.show_message("Error", f"Failed to compute union: {str(e)}")
     
     def intersection(self):
         """Compute the intersection of the current automaton with another one."""
-        if not self.current_automaton or not self.operation_automaton:
-            self.log("Need two automata for intersection operation")
+        if not self.current_automaton:
+            self.log("No automaton loaded")
+            return
+            
+        if not self.operation_automaton:
+            self.log("No second automaton selected for intersection operation")
+            self.show_message("Missing Automaton", "Please select a second automaton for the intersection operation")
             return
         
         try:
             self.log(f"Computing intersection of {self.current_automaton.name} and {self.operation_automaton.name}...")
+            
+            # Validate both automata
+            if not self.current_automaton.states:
+                self.log(f"Error: The current automaton '{self.current_automaton.name}' has no states")
+                return
+                
+            if not self.operation_automaton.states:
+                self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
+                return
             
             self.result_automaton = self.current_automaton.intersection(self.operation_automaton)
             
@@ -408,15 +462,30 @@ class AnalysisTab(QWidget):
             self.update_button_states()
         except Exception as e:
             self.log(f"Error computing intersection: {str(e)}")
+            self.show_message("Error", f"Failed to compute intersection: {str(e)}")
     
     def check_equivalence(self):
         """Check if the current automaton is equivalent to another one."""
-        if not self.current_automaton or not self.operation_automaton:
-            self.log("Need two automata for equivalence check")
+        if not self.current_automaton:
+            self.log("No automaton loaded")
+            return
+            
+        if not self.operation_automaton:
+            self.log("No second automaton selected for equivalence check")
+            self.show_message("Missing Automaton", "Please select a second automaton for the equivalence check")
             return
         
         try:
             self.log(f"Checking equivalence of {self.current_automaton.name} and {self.operation_automaton.name}...")
+            
+            # Validate both automata
+            if not self.current_automaton.states:
+                self.log(f"Error: The current automaton '{self.current_automaton.name}' has no states")
+                return
+                
+            if not self.operation_automaton.states:
+                self.log(f"Error: The second automaton '{self.operation_automaton.name}' has no states")
+                return
             
             are_equivalent = self.current_automaton.are_equivalent(self.operation_automaton)
             
@@ -428,6 +497,7 @@ class AnalysisTab(QWidget):
                 self.show_message("Equivalence Check", f"The automata {self.current_automaton.name} and {self.operation_automaton.name} are NOT equivalent.")
         except Exception as e:
             self.log(f"Error checking equivalence: {str(e)}")
+            self.show_message("Error", f"Failed to check equivalence: {str(e)}")
     
     def visualize_result(self):
         """Visualize the result automaton."""

@@ -8,6 +8,8 @@ from .state import State
 from .alphabet import Alphabet
 from .transition import Transition
 
+
+
 class Automaton:
     """
     Class representing a finite automaton (DFA or NFA).
@@ -562,19 +564,21 @@ class Automaton:
         Returns:
             A new automaton accepting the union
         """
-        # Convert both to DFAs
-        self_dfa = self.to_deterministic()
-        other_dfa = other.to_deterministic()
+        # Convert both to DFAs and make sure they are complete
+        self_dfa = self.to_deterministic().complete()
+        other_dfa = other.to_deterministic().complete()
         
-        # Combine alphabets
-        combined_alphabet = Alphabet(self.alphabet.symbols.union(other.alphabet.symbols))
-        union_name = f"{self.name}|{other.name}"
+        # Create a new alphabet as the union of both alphabets
+        combined_alphabet = Alphabet(self_dfa.alphabet.symbols.union(other_dfa.alphabet.symbols))
+        union_name = f"{self_dfa.name}|{other_dfa.name}"
         
         # Create a new automaton for the union
         union = Automaton(union_name, combined_alphabet)
         
-        # Create combined states
+        # Create state pairs mapping
         state_pairs = {}
+        
+        # Create combined states
         for self_state in self_dfa.states:
             for other_state in other_dfa.states:
                 name = f"({self_state.name},{other_state.name})"
@@ -585,27 +589,27 @@ class Automaton:
                 union.add_state(combined_state)
                 state_pairs[(self_state, other_state)] = combined_state
         
-        # Add transitions
+        # Add transitions - with both automata complete, there should be a valid transition for every symbol
         for (self_state, other_state), combined_state in state_pairs.items():
             for symbol in combined_alphabet.symbols:
-                # Get next states in both automata
-                self_next = list(self_dfa.get_next_states(self_state, symbol)) if symbol in self_dfa.alphabet.symbols else []
-                other_next = list(other_dfa.get_next_states(other_state, symbol)) if symbol in other_dfa.alphabet.symbols else []
+                # Get next states in both automata - since automata are complete, these should never be empty
+                self_next_states = self_dfa.get_next_states(self_state, symbol)
+                other_next_states = other_dfa.get_next_states(other_state, symbol)
                 
-                # If no transition exists in one automaton, stay in the same state
-                if not self_next:
-                    self_next = [self_state]
-                if not other_next:
-                    other_next = [other_state]
+                if not self_next_states or not other_next_states:
+                    continue  # Skip if somehow there's no transition (shouldn't happen with complete DFAs)
                 
-                # Add transitions to all combinations of next states
-                for self_next_state in self_next:
-                    for other_next_state in other_next:
-                        next_combined = state_pairs.get((self_next_state, other_next_state))
-                        if next_combined:
-                            union.add_transition(combined_state, next_combined, symbol)
+                # Since we're dealing with DFAs, there should be exactly one next state for each symbol
+                self_next = next(iter(self_next_states))
+                other_next = next(iter(other_next_states))
+                
+                # Add transition to the combined next state
+                next_combined = state_pairs.get((self_next, other_next))
+                if next_combined:
+                    union.add_transition(combined_state, next_combined, symbol)
         
-        return union
+        # Simplify the result by removing unreachable states
+        return self._remove_unreachable_states(union)
     
     def intersection(self, other: 'Automaton') -> 'Automaton':
         """
@@ -617,19 +621,21 @@ class Automaton:
         Returns:
             A new automaton accepting the intersection
         """
-        # Convert both to DFAs
-        self_dfa = self.to_deterministic()
-        other_dfa = other.to_deterministic()
+        # Convert both to DFAs and make sure they are complete
+        self_dfa = self.to_deterministic().complete()
+        other_dfa = other.to_deterministic().complete()
         
-        # Combine alphabets
-        combined_alphabet = Alphabet(self.alphabet.symbols.union(other.alphabet.symbols))
-        intersection_name = f"{self.name}&{other.name}"
+        # Create a new alphabet as the union of both alphabets
+        combined_alphabet = Alphabet(self_dfa.alphabet.symbols.union(other_dfa.alphabet.symbols))
+        intersection_name = f"{self_dfa.name}&{other_dfa.name}"
         
         # Create a new automaton for the intersection
         intersection = Automaton(intersection_name, combined_alphabet)
         
-        # Create combined states
+        # Create state pairs mapping
         state_pairs = {}
+        
+        # Create combined states
         for self_state in self_dfa.states:
             for other_state in other_dfa.states:
                 name = f"({self_state.name},{other_state.name})"
@@ -640,22 +646,69 @@ class Automaton:
                 intersection.add_state(combined_state)
                 state_pairs[(self_state, other_state)] = combined_state
         
-        # Add transitions
+        # Add transitions - with both automata complete, there should be a valid transition for every symbol
         for (self_state, other_state), combined_state in state_pairs.items():
             for symbol in combined_alphabet.symbols:
-                # Get next states in both automata
-                self_next = list(self_dfa.get_next_states(self_state, symbol)) if symbol in self_dfa.alphabet.symbols else []
-                other_next = list(other_dfa.get_next_states(other_state, symbol)) if symbol in other_dfa.alphabet.symbols else []
+                # Get next states in both automata - since automata are complete, these should never be empty
+                self_next_states = self_dfa.get_next_states(self_state, symbol)
+                other_next_states = other_dfa.get_next_states(other_state, symbol)
                 
-                # Only add transitions if both automata have transitions
-                if self_next and other_next:
-                    for self_next_state in self_next:
-                        for other_next_state in other_next:
-                            next_combined = state_pairs.get((self_next_state, other_next_state))
-                            if next_combined:
-                                intersection.add_transition(combined_state, next_combined, symbol)
+                if not self_next_states or not other_next_states:
+                    continue  # Skip if somehow there's no transition (shouldn't happen with complete DFAs)
+                
+                # Since we're dealing with DFAs, there should be exactly one next state for each symbol
+                self_next = next(iter(self_next_states))
+                other_next = next(iter(other_next_states))
+                
+                # Add transition to the combined next state
+                next_combined = state_pairs.get((self_next, other_next))
+                if next_combined:
+                    intersection.add_transition(combined_state, next_combined, symbol)
         
-        return intersection
+        # Simplify the result by removing unreachable states
+        return self._remove_unreachable_states(intersection)
+    
+    def _remove_unreachable_states(self, automaton: 'Automaton') -> 'Automaton':
+        """
+        Remove unreachable states from an automaton.
+        
+        Args:
+            automaton: The automaton to simplify
+            
+        Returns:
+            A new automaton with unreachable states removed
+        """
+        # Find all reachable states using BFS
+        reachable = set()
+        queue = deque(automaton.get_initial_states())
+        
+        while queue:
+            state = queue.popleft()
+            if state in reachable:
+                continue
+                
+            reachable.add(state)
+            
+            # Add all states reachable via transitions
+            for transition in automaton.get_transitions_from(state):
+                if transition.to_state not in reachable:
+                    queue.append(transition.to_state)
+        
+        # Create a new automaton with only reachable states
+        simplified_name = automaton.name + "_simplified"
+        simplified = Automaton(simplified_name, automaton.alphabet)
+        
+        # First add all reachable states
+        for state in reachable:
+            simplified.add_state(state)
+        
+        # Then add transitions between them
+        for state in reachable:
+            for transition in automaton.get_transitions_from(state):
+                if transition.to_state in reachable:
+                    simplified.add_transition(transition.from_state, transition.to_state, transition.symbol)
+        
+        return simplified
     
     def are_equivalent(self, other: 'Automaton') -> bool:
         """
@@ -667,22 +720,41 @@ class Automaton:
         Returns:
             True if the automata are equivalent, False otherwise
         """
-        # Two automata are equivalent if their intersection with the complement of the other is empty
-        # L(A) = L(B) iff L(A) ∩ L(B)^c = ∅ and L(A)^c ∩ L(B) = ∅
+        # Convert both to minimal DFAs
+        self_min = self.to_deterministic().minimize()
+        other_min = other.to_deterministic().minimize()
+        
+        # If both DFAs have different number of states after minimization, they are not equivalent
+        if len(self_min.states) != len(other_min.states):
+            return False
+            
+        # If both minimal DFAs have different number of transitions, they are not equivalent
+        if len(self_min.transitions) != len(other_min.transitions):
+            return False
+            
+        # If they have different alphabets, they are not equivalent
+        if self_min.alphabet.symbols != other_min.alphabet.symbols:
+            return False
+            
+        # Check more precisely by computing symmetric difference
+        # Two automata are equivalent if their symmetric difference is empty
+        # L(A) = L(B) iff (L(A) ∩ L(B)^c) ∪ (L(A)^c ∩ L(B)) = ∅
+        
+        # Get complements
+        self_complement = self_min.get_complement()
+        other_complement = other_min.get_complement()
         
         # Check L(A) ∩ L(B)^c = ∅
-        other_complement = other.get_complement()
-        intersection1 = self.intersection(other_complement)
+        intersection1 = self_min.intersection(other_complement)
         
-        # If intersection1 has any accepting paths, automata are not equivalent
+        # Check if the intersection has an accepting path
         if self._has_accepting_path(intersection1):
             return False
-        
+            
         # Check L(A)^c ∩ L(B) = ∅
-        self_complement = self.get_complement()
-        intersection2 = self_complement.intersection(other)
+        intersection2 = self_complement.intersection(other_min)
         
-        # If intersection2 has any accepting paths, automata are not equivalent
+        # Check if the intersection has an accepting path
         return not self._has_accepting_path(intersection2)
     
     def _has_accepting_path(self, automaton: 'Automaton') -> bool:
@@ -737,37 +809,12 @@ class Automaton:
         """
         accepted_words = []
         
-        # Check if there are any initial states
-        initial_states = self.get_initial_states()
-        if not initial_states:
-            return accepted_words  # Return empty list if no initial states
-        
         # Use BFS to generate words
-        if self.is_deterministic():
-            # For DFA: start with the single initial state
-            queue = deque([("", next(iter(initial_states)))])
-        else:
-            # For NFA: start with all initial states
-            queue = deque([("", state) for state in initial_states])
-            
-            # Also add epsilon closures of initial states
-            for state in list(initial_states):
-                epsilon_closure = self._epsilon_closure({state})
-                for eps_state in epsilon_closure:
-                    if eps_state != state:
-                        queue.append(("", eps_state))
-        
-        # Keep track of visited (word, state) pairs to avoid cycles
-        visited = set()
+        queue = deque([("", next(iter(self.get_initial_states())))] if self.is_deterministic() 
+                     else [("", state) for state in self.get_initial_states()])
         
         while queue:
             word, state = queue.popleft()
-            
-            # Skip if we've seen this (word, state) pair before
-            if (word, state) in visited:
-                continue
-            
-            visited.add((word, state))
             
             # If we're in a final state, add the word to the list
             if state.is_final:
@@ -779,16 +826,13 @@ class Automaton:
             
             # For each symbol in alphabet, explore the next states
             for symbol in self.alphabet.symbols:
-                next_states = self.get_next_states(state, symbol)
-                for next_state in next_states:
+                for next_state in self.get_next_states(state, symbol):
                     queue.append((word + symbol, next_state))
             
             # For NFAs, also follow epsilon transitions
             if not self.is_deterministic():
-                epsilon_next_states = self.get_next_states(state, Transition.EPSILON)
-                for next_state in epsilon_next_states:
-                    if (word, next_state) not in visited:
-                        queue.append((word, next_state))
+                for next_state in self.get_next_states(state, Transition.EPSILON):
+                    queue.append((word, next_state))
         
         return accepted_words
     

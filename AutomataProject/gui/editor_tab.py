@@ -166,13 +166,28 @@ class EditorTab(QWidget):
             if reply == QMessageBox.No:
                 return
         
-        name, ok = QInputDialog.getText(self, "New Automaton", "Enter name for the new automaton:")
-        
-        if ok and name:
-            self.current_automaton = Automaton(name)
+        try:
+            # Use a safer approach with parent and flags specified
+            dialog = QInputDialog(self)
+            dialog.setWindowTitle("New Automaton")
+            dialog.setLabelText("Enter name for the new automaton:")
+            dialog.setInputMode(QInputDialog.TextInput)
+            dialog.setTextValue("NewAutomaton")  # Default name
+            
+            if dialog.exec() == QInputDialog.Accepted:
+                name = dialog.textValue().strip()
+                if name:
+                    self.current_automaton = Automaton(name)
+                    self.update_ui_from_automaton()
+                    self.has_changes = False
+                    self.parent.statusBar().showMessage(f"Created new automaton: {name}")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to create new automaton: {str(e)}")
+            # If error occurred, create a default automaton
+            self.current_automaton = Automaton("DefaultAutomaton")
             self.update_ui_from_automaton()
             self.has_changes = False
-            self.parent.statusBar().showMessage(f"Created new automaton: {name}")
+            self.parent.statusBar().showMessage("Created default automaton after error")
     
     def update_ui_from_automaton(self):
         """Update the UI to reflect the current automaton."""
