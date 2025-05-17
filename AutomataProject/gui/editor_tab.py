@@ -9,7 +9,7 @@ from automata.automaton import Automaton
 from automata.state import State
 from automata.alphabet import Alphabet
 from automata.transition import Transition
-from utils.visualization import visualize_automaton
+from utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class EditorTab(QWidget):
@@ -472,8 +472,9 @@ class EditorTab(QWidget):
                 if widget != self.parent.visualization_label:
                     widget.setParent(None)
             
-            # Create visualization
-            fig = visualize_automaton(self.current_automaton)
+            # Create visualization with consistent positioning
+            # It will automatically reuse positions if available
+            fig = visualize_automaton(self.current_automaton, reuse_positions=True)
             canvas = FigureCanvas(fig)
             
             # Add to the visualization panel

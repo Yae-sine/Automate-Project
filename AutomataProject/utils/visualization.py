@@ -9,6 +9,10 @@ from automata.automaton import Automaton
 from automata.state import State
 from automata.transition import Transition
 
+# Global dictionary to store node positions for each automaton
+# Key: automaton name, Value: dictionary of node positions
+node_positions = {}
+
 def create_automaton_graph(automaton: Automaton) -> nx.DiGraph:
     """
     Create a networkx graph from an automaton.
@@ -43,7 +47,8 @@ def create_automaton_graph(automaton: Automaton) -> nx.DiGraph:
     return G
 
 def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tuple[str, str, str]]] = None,
-                       ax: Optional[plt.Axes] = None, figsize: Tuple[int, int] = (10, 8)) -> Figure:
+                       ax: Optional[plt.Axes] = None, figsize: Tuple[int, int] = (10, 8),
+                       reuse_positions: bool = True) -> Figure:
     """
     Visualize an automaton using networkx and matplotlib.
     
@@ -52,6 +57,7 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
         highlight_path: Optional list of transitions to highlight (from_state, to_state, symbol)
         ax: Optional matplotlib axis to draw on
         figsize: Size of the figure
+        reuse_positions: Whether to reuse previously calculated node positions
         
     Returns:
         Matplotlib figure object
@@ -64,8 +70,27 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
     else:
         fig = ax.figure
     
-    # Create position layout
-    pos = nx.spring_layout(G, k=0.5, iterations=50)
+    # Generate or reuse node positions
+    global node_positions
+    if reuse_positions and automaton.name in node_positions:
+        # Check if all current nodes are in the saved positions
+        stored_positions = node_positions[automaton.name]
+        missing_nodes = [node for node in G.nodes() if node not in stored_positions]
+        
+        if missing_nodes:
+            # If there are new nodes, start with existing positions and let networkx position the new ones
+            pos = nx.spring_layout(G, pos=stored_positions, fixed=list(stored_positions.keys()),
+                                 k=0.5, iterations=50)
+            # Update stored positions
+            node_positions[automaton.name] = pos
+        else:
+            # Use stored positions directly
+            pos = stored_positions
+    else:
+        # Calculate new positions
+        pos = nx.spring_layout(G, k=0.5, iterations=50)
+        # Store for future use
+        node_positions[automaton.name] = pos
     
     # Draw nodes
     node_colors = []

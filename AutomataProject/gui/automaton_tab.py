@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
 from PyQt5.QtCore import pyqtSignal, Qt
 
 from automata.automaton import Automaton
-from utils.visualization import visualize_automaton
+from utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class AutomatonTab(QWidget):
@@ -188,8 +188,8 @@ class AutomatonTab(QWidget):
             # Clear previous visualization
             self.clear_display()
             
-            # Create visualization
-            fig = visualize_automaton(self.current_automaton)
+            # Create visualization with consistent positioning
+            fig = visualize_automaton(self.current_automaton, reuse_positions=True)
             canvas = FigureCanvas(fig)
             
             # Add to the visualization panel

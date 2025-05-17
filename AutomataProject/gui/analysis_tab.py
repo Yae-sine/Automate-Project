@@ -6,7 +6,7 @@ from PyQt5.QtGui import QFont
 import os
 
 from automata.automaton import Automaton
-from utils.visualization import visualize_automaton
+from utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class AnalysisTab(QWidget):
@@ -512,8 +512,8 @@ class AnalysisTab(QWidget):
                 if widget != self.parent.visualization_label:
                     widget.setParent(None)
             
-            # Create visualization
-            fig = visualize_automaton(self.result_automaton)
+            # Create visualization with consistent positioning
+            fig = visualize_automaton(self.result_automaton, reuse_positions=True)
             canvas = FigureCanvas(fig)
             
             # Add to the visualization panel

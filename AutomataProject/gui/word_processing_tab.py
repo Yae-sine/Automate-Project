@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from automata.automaton import Automaton
-from utils.visualization import animate_word_processing
+from utils.visualization import animate_word_processing, node_positions, visualize_automaton
 
 class WordProcessingTab(QWidget):
     """Tab for word processing and language operations."""
@@ -210,7 +210,19 @@ class WordProcessingTab(QWidget):
             return
         
         try:
-            # Generate animation frames
+            # Reset any existing node positions to ensure we start with a clean state
+            if self.current_automaton.name in node_positions:
+                # We'll use the existing positions
+                pass
+            else:
+                # We'll create new positions that will be reused
+                # First visualize once to calculate and store positions
+                if len(node_positions) == 0:
+                    # Only do this pre-visualization if we don't have any positions yet
+                    fig = visualize_automaton(self.current_automaton, reuse_positions=True)
+                    plt.close(fig)  # Close this figure as it's just for setup
+            
+            # Generate animation frames (they will use the cached positions)
             self.animation_frames = animate_word_processing(self.current_automaton, word)
             self.current_frame = 0
             
@@ -221,6 +233,8 @@ class WordProcessingTab(QWidget):
             # Display first frame
             self.display_animation_frame(0)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.show_message("Animation Error", f"Error creating animation: {str(e)}")
     
     def display_animation_frame(self, frame_index):
