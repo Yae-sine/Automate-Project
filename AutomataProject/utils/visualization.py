@@ -107,8 +107,41 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
             # Use stored positions directly
             pos = stored_positions
     else:
-        # Calculate new positions with better spacing
-        pos = nx.spring_layout(G, k=0.7, iterations=100, seed=42)
+        # Calculate new positions with better spacing and prevent overlaps
+        # Using a larger k value and more iterations for better separation
+        pos = nx.spring_layout(G, k=1.5, iterations=200, seed=42)
+        
+        # Post-process positions to ensure minimum distance between nodes
+        min_distance = 0.3  # Minimum distance between nodes
+        
+        # Iteratively adjust positions to ensure minimum distance
+        for _ in range(10):  # Try to adjust up to 10 times
+            overlaps = False
+            for n1 in G.nodes():
+                for n2 in G.nodes():
+                    if n1 != n2:
+                        # Calculate distance between nodes
+                        dx = pos[n1][0] - pos[n2][0]
+                        dy = pos[n1][1] - pos[n2][1]
+                        dist = (dx**2 + dy**2)**0.5
+                        
+                        # If nodes are too close, push them apart
+                        if dist < min_distance:
+                            overlaps = True
+                            # Push direction
+                            push_x = dx / dist if dist > 0 else 0
+                            push_y = dy / dist if dist > 0 else 0
+                            
+                            # Adjust positions (move both nodes slightly)
+                            adjustment = 0.05 * (min_distance - dist)
+                            pos[n1] = (pos[n1][0] + push_x * adjustment, 
+                                      pos[n1][1] + push_y * adjustment)
+                            pos[n2] = (pos[n2][0] - push_x * adjustment, 
+                                      pos[n2][1] - push_y * adjustment)
+            
+            if not overlaps:
+                break
+        
         # Store for future use
         node_positions[automaton.name] = pos
     
@@ -215,18 +248,29 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
                                   mutation_scale=15, zorder=3)
             ax.add_patch(arrow)
         else:
-            # For parallel edges, we need different curve factors
-            # Check if there's a reverse edge
-            rad = 0.15
+            # Create the curved edge with more prominent arrow and better routing
+            # Calculate appropriate curve based on node positions to avoid overlapping with other nodes
+            rad = 0.15  # Default curve
+            
+            # Increase curve for reverse edges
             if G.has_edge(v, u):
                 rad = 0.3
             
-            # Create the curved edge with more prominent arrow
+            # Compute angle between nodes to determine best curve direction
+            angle = np.arctan2(pos[v][1] - pos[u][1], pos[v][0] - pos[u][0])
+            if -np.pi/2 <= angle <= np.pi/2:
+                # For edges going generally rightward, curve upward
+                rad = abs(rad)
+            else:
+                # For edges going generally leftward, curve downward
+                rad = -abs(rad)
+            
+            # Create curved edge with adjusted parameters
             arrow = FancyArrowPatch(pos[u], pos[v], 
                                   connectionstyle=f'arc3,rad={rad}',
                                   arrowstyle='->', color=edge_colors[i],
                                   linewidth=edge_widths[i], alpha=edge_alphas[i],
-                                  mutation_scale=25, shrinkA=5, shrinkB=5, 
+                                  mutation_scale=25, shrinkA=15, shrinkB=15,  # Increase shrink to avoid nodes
                                   lw=2.0, zorder=1)
             curved_edges.append(arrow)
     
