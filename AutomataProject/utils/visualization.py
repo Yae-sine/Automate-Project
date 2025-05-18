@@ -252,9 +252,22 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
             # Calculate appropriate curve based on node positions to avoid overlapping with other nodes
             rad = 0.15  # Default curve
             
-            # Increase curve for reverse edges
-            if G.has_edge(v, u):
-                rad = 0.3
+            # Draw separate curves for bidirectional edges instead of increasing the curve
+            has_reverse = G.has_edge(v, u)
+            if has_reverse:
+                # For bidirectional edges, draw two separate curves
+                # First edge curves upward
+                rad1 = 0.25  # Curve one way
+                arrow1 = FancyArrowPatch(pos[u], pos[v], 
+                                      connectionstyle=f'arc3,rad={rad1}',
+                                      arrowstyle='->', color=edge_colors[i],
+                                      linewidth=edge_widths[i], alpha=edge_alphas[i],
+                                      mutation_scale=25, shrinkA=15, shrinkB=15,
+                                      lw=2.0, zorder=1)
+                curved_edges.append(arrow1)
+                
+                # Don't add the second arrow here - it will be added when we iterate to the reverse edge
+                continue
             
             # Compute angle between nodes to determine best curve direction
             angle = np.arctan2(pos[v][1] - pos[u][1], pos[v][0] - pos[u][0])
@@ -290,11 +303,28 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
             # Standard edge
             x1, y1 = pos[u]
             x2, y2 = pos[v]
-            rad = 0.15 if not G.has_edge(v, u) else 0.3
             
-            # Middle position with some offset
-            label_pos = ((x1 + x2) / 2 + rad * (y2 - y1), 
-                         (y1 + y2) / 2 + rad * (x1 - x2))
+            # Check if bidirectional
+            has_reverse = G.has_edge(v, u)
+            if has_reverse:
+                # For bidirectional edges with separate arrows, position label above the upward curve
+                rad = 0.25  # Match the curve value used above
+                # Position the label above the curved line
+                label_pos = ((x1 + x2) / 2 + rad * (y2 - y1), 
+                            (y1 + y2) / 2 + rad * (x1 - x2))
+            else:
+                # Standard curve
+                rad = 0.15
+                # Compute angle to determine curve direction
+                angle = np.arctan2(y2 - y1, x2 - x1)
+                if -np.pi/2 <= angle <= np.pi/2:
+                    rad = abs(rad)
+                else:
+                    rad = -abs(rad)
+                
+                # Middle position with offset based on curve
+                label_pos = ((x1 + x2) / 2 + rad * (y2 - y1), 
+                            (y1 + y2) / 2 + rad * (x1 - x2))
         
         # Create background for better visibility
         bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8)
