@@ -228,24 +228,50 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
     for i, (u, v) in enumerate(G.edges()):
         # Self-loops need special handling
         if u == v:
-            rad = 0.3
+            # Draw a more elegant self-loop as an arc above the node
             center = pos[u]
-            theta = np.linspace(0, 2*np.pi, 100)
-            circle_radius = 0.05
-            circle_x = center[0] + circle_radius * np.cos(theta)
-            circle_y = center[1] + circle_radius * np.sin(theta)
-            ax.plot(circle_x, circle_y, color=edge_colors[i], linewidth=edge_widths[i], 
-                    linestyle=edge_styles[i], alpha=edge_alphas[i], zorder=1)
             
-            # Add more prominent arrowhead
-            arrow_idx = len(theta) * 3 // 4
-            dx = circle_x[arrow_idx] - circle_x[arrow_idx-5]
-            dy = circle_y[arrow_idx] - circle_y[arrow_idx-5]
-            arrow = FancyArrowPatch((circle_x[arrow_idx-5], circle_y[arrow_idx-5]),
-                                  (circle_x[arrow_idx], circle_y[arrow_idx]),
-                                  arrowstyle='->', color=edge_colors[i],
-                                  linewidth=edge_widths[i]*1.5, alpha=edge_alphas[i], 
-                                  mutation_scale=15, zorder=3)
+            # Create a larger, more visible loop
+            loop_radius = 0.15  # Larger radius for visibility
+            loop_center = (center[0], center[1] - 0.05)  # Slightly offset center
+            
+            # Draw arc from 0 to 270 degrees (three-quarters of a circle)
+            theta1, theta2 = 180, 540  # Draw from left to right in a loop
+            arc = plt.matplotlib.patches.Arc(
+                loop_center, 
+                width=loop_radius*2, 
+                height=loop_radius*2,
+                theta1=theta1, 
+                theta2=theta2,
+                color=edge_colors[i],
+                linewidth=edge_widths[i],
+                linestyle=edge_styles[i],
+                alpha=edge_alphas[i],
+                zorder=1
+            )
+            ax.add_patch(arc)
+            
+            # Add arrow at the right position
+            arrow_angle = 270  # Angle in degrees where to place arrow
+            angle_rad = np.radians(arrow_angle)
+            arrow_x = loop_center[0] + np.cos(angle_rad) * loop_radius
+            arrow_y = loop_center[1] + np.sin(angle_rad) * loop_radius
+            
+            # Calculate tangent direction for arrow
+            dx = -np.sin(angle_rad)
+            dy = np.cos(angle_rad)
+            
+            # Create a more prominent arrow
+            arrow = FancyArrowPatch(
+                (arrow_x - dx*0.05, arrow_y - dy*0.05),
+                (arrow_x, arrow_y),
+                arrowstyle='->',
+                color=edge_colors[i],
+                linewidth=edge_widths[i]*1.5,
+                alpha=edge_alphas[i],
+                mutation_scale=15,
+                zorder=3
+            )
             ax.add_patch(arrow)
         else:
             # Create the curved edge with more prominent arrow and better routing
@@ -259,11 +285,11 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
                 # First edge curves upward
                 rad1 = 0.25  # Curve one way
                 arrow1 = FancyArrowPatch(pos[u], pos[v], 
-                                      connectionstyle=f'arc3,rad={rad1}',
-                                      arrowstyle='->', color=edge_colors[i],
-                                      linewidth=edge_widths[i], alpha=edge_alphas[i],
-                                      mutation_scale=25, shrinkA=15, shrinkB=15,
-                                      lw=2.0, zorder=1)
+                                       connectionstyle=f'arc3,rad={rad1}',
+                                       arrowstyle='->', color=edge_colors[i],
+                                       linewidth=edge_widths[i], alpha=edge_alphas[i],
+                                       mutation_scale=25, shrinkA=15, shrinkB=15,
+                                       lw=2.0, zorder=1)
                 curved_edges.append(arrow1)
                 
                 # Don't add the second arrow here - it will be added when we iterate to the reverse edge
@@ -296,9 +322,10 @@ def visualize_automaton(automaton: Automaton, highlight_path: Optional[List[Tupl
     for (u, v), label in edge_labels.items():
         # Calculate position for the label
         if u == v:
-            # Self-loop
+            # Self-loop - place label just above the peak of the arc
             x, y = pos[u]
-            label_pos = (x, y + 0.15)
+            # Position the label right at the top of the self-loop
+            label_pos = (x, y - 0.22)  # Positioned at the top of the loop arc
         else:
             # Standard edge
             x1, y1 = pos[u]
