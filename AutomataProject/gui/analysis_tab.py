@@ -5,8 +5,8 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 import os
 
-from automata.automaton import Automaton
-from utils.visualization import visualize_automaton, node_positions
+from AutomataProject.automata.automaton import Automaton
+from AutomataProject.utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class AnalysisTab(QWidget):

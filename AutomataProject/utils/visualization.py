@@ -9,9 +9,9 @@ from typing import Dict, Set, Optional, Tuple, List, Any
 import colorsys
 
 # Use absolute imports instead of relative imports
-from automata.automaton import Automaton
-from automata.state import State
-from automata.transition import Transition
+from AutomataProject.automata.automaton import Automaton
+from AutomataProject.automata.state import State
+from AutomataProject.automata.transition import Transition
 
 # Global dictionary to store node positions for each automaton
 # Key: automaton name, Value: dictionary of node positions

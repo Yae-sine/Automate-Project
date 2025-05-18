@@ -5,11 +5,11 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                           QInputDialog, QFileDialog)
 from PyQt5.QtCore import Qt, pyqtSignal
 
-from automata.automaton import Automaton
-from automata.state import State
-from automata.alphabet import Alphabet
-from automata.transition import Transition
-from utils.visualization import visualize_automaton, node_positions
+from AutomataProject.automata.automaton import Automaton
+from AutomataProject.automata.state import State
+from AutomataProject.automata.alphabet import Alphabet
+from AutomataProject.automata.transition import Transition
+from AutomataProject.utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class EditorTab(QWidget):

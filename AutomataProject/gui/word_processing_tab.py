@@ -9,8 +9,8 @@ import datetime
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from automata.automaton import Automaton
-from utils.visualization import animate_word_processing, node_positions, visualize_automaton
+from AutomataProject.automata.automaton import Automaton
+from AutomataProject.utils.visualization import animate_word_processing, node_positions, visualize_automaton
 
 class WordProcessingTab(QWidget):
     """Tab for word processing and language operations."""

@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
                           QInputDialog)
 from PyQt5.QtCore import pyqtSignal, Qt
 
-from automata.automaton import Automaton
-from utils.visualization import visualize_automaton, node_positions
+from AutomataProject.automata.automaton import Automaton
+from AutomataProject.utils.visualization import visualize_automaton, node_positions
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class AutomatonTab(QWidget):

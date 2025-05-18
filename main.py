@@ -1,7 +1,12 @@
 import sys
 import os
+
+# Add the AutomataProject directory to Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)  # Add current directory first
+
 from PyQt5.QtWidgets import QApplication
-from gui import MainWindow
+from AutomataProject.gui import MainWindow
 
 def main():
     """Main entry point for the application."""
@@ -27,7 +32,7 @@ def main():
     # Connect the analysis tab's automaton_created signal to refresh automaton list
     window.analysis_tab.automaton_created.connect(window.automaton_tab.refresh_automaton_list)
     
-    # Run application event loop with exec() instead of exec_()
+    # Run application event loop
     sys.exit(app.exec())
 
 if __name__ == "__main__":

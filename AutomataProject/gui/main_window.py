@@ -10,6 +10,7 @@ from .automaton_tab import AutomatonTab
 from .editor_tab import EditorTab
 from .analysis_tab import AnalysisTab
 from .word_processing_tab import WordProcessingTab
+from AutomataProject.utils.visualization import save_automaton_image
 
 # Modern color scheme
 COLORS = {
@@ -436,7 +437,6 @@ class MainWindow(QMainWindow):
         
         if file_path:
             format_type = "png" if selected_filter == "PNG (*.png)" else "svg"
-            from utils.visualization import save_automaton_image
             save_automaton_image(current_automaton, file_path, format=format_type)
             self.statusBar().showMessage(f"Image exported to {file_path}")
     
@@ -715,7 +715,7 @@ class MainWindow(QMainWindow):
             <p>A powerful tool for visualizing and analyzing finite automata.</p>
             <p>Create, edit, and simulate automata with a modern interface.</p>
             <p><small>Version 1.0</small></p>
-            <p><small>© 2023 Academic Project</small></p>
+            <p><small>© 2025 Academic Project</small></p>
         </div>
         """
         
