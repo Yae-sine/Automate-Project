@@ -2,6 +2,11 @@
 
 A Python GUI application to design, analyze, and simulate finite automata (DFA/NFA).
 
+## Preview
+<img width="600" height="700" alt="Screenshot 2025-07-13 220317" src="https://github.com/user-attachments/assets/25d71aaa-6470-458b-8e8e-3b3144911290" /> <br>
+<img width="600" height="700" alt="Screenshot 2025-07-13 220349" src="https://github.com/user-attachments/assets/af868e00-95ba-4c83-a83d-8041b6aaf204" /> <br>
+<img width="600" height="700" alt="Screenshot 2025-07-13 220416" src="https://github.com/user-attachments/assets/dc75cb3f-b1fe-4c64-889b-d1ed08fd4e77" /> <br>
+
 ## Main Features
 
 ### Automata Management
