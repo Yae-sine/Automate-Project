@@ -2,30 +2,32 @@
 
 A Python GUI application to design, analyze, and simulate finite automata (DFA/NFA).
 
-## Features
+## Main Features
 
-### Core Automata Management
+### Automata Management
 - Object-oriented model with classes for State, Transition, Alphabet, and Automaton
-- Save/load automata to/from JSON files
-- Create, edit, and delete automata with a user-friendly interface
+- Visual creation and editing of automata with support for initial and final states
+- Full automata management (save, load, delete, rename)
+- User-friendly interface to manipulate all aspects of automata
 
 ### Visualization
-- Interactive graph visualization of automata
+- Interactive visualization of automata as graphs
 - Step-by-step animation of word processing
-- Export visualizations as PNG/SVG images
+- Export visualizations as PNG/SVG images for documentation or presentations
 
-### Analysis & Transformations
+### Analysis and Transformations
 - Check if an automaton is deterministic, complete, or minimal
-- Convert NFA to DFA (subset construction)
-- Minimize automata (Hopcroft's algorithm)
-- Complete incomplete automata
-- Verify equivalence between automata
+- Analyze fundamental properties of automata
+- Automatic transformation of automata (determinization, completion, minimization)
+- Operations between automata (union, intersection, equivalence checking)
 
-### Word & Language Processing
+### Word and Language Processing
 - Test if a word is accepted by an automaton
-- Animate word recognition steps
+- Animate the automaton's traversal with the option to save animations
+- Process words with step-by-step visualization of transitions
 - Generate all accepted words up to a given length
-- Perform language operations: union, intersection, and complement
+- Statistics on recognized languages (number of words accepted by length)
+
 
 ## Installation
 
@@ -35,7 +37,7 @@ A Python GUI application to design, analyze, and simulate finite automata (DFA/N
 - NetworkX
 - Matplotlib
 
-### Dependencies Installation
+### Installing Dependencies
 ```bash
 pip install PyQt5 networkx matplotlib
 ```
@@ -49,19 +51,19 @@ pip install PyQt5 networkx matplotlib
 python main.py
 ```
 
-## Usage Guide
+## User Guide
 
 ### Creating a New Automaton
 1. Click on the "Editor" tab
-2. Click "New" button
+2. Click the "New" button
 3. Enter a name for the automaton
 4. Add symbols to the alphabet using the "Add Symbol" button
 5. Add states using the "Add State" section (check "Initial" or "Final" as needed)
-6. Add transitions by selecting source state, symbol, and target state
-7. Click "Save" to save the automaton
+6. Add transitions by selecting the source state, symbol, and target state
+7. Click "Save" to save the automaton in the "Automates" directory that will be created
 
 ### Loading an Automaton
-1. Navigate to the "Automata" tab
+1. Go to the "Automata" tab
 2. Select an automaton from the list or use the "Load" button to load from a file
 3. The automaton will be displayed in the visualization panel
 
@@ -70,17 +72,17 @@ python main.py
 2. Go to the "Analysis" tab
 3. The automaton's properties will be displayed at the top
 4. Use the transformation buttons to convert to DFA, minimize, etc.
-5. Use the "Visualize Result" button to view the transformed automaton
-6. Use the "Save Result as New Automaton" to save the result
+5. Use the "Visualize Result" button to see the transformed automaton
+6. Use "Save Result as New Automaton" to save the result
 
-### Testing Word Recognition
+### Word Recognition Test
 1. Load an automaton
 2. Go to the "Word Processing" tab
 3. Enter a word in the input field
 4. Click "Test Word" to check if the word is accepted
-5. Click "Animate Processing" to see step-by-step visualization
+5. Click "Animate Processing" to see the step-by-step visualization
 
-### Generating Words
+### Word Generation
 1. Load an automaton
 2. Go to the "Word Processing" tab
 3. Set the maximum length for generated words
@@ -88,7 +90,7 @@ python main.py
 
 ## Project Structure
 
-- `automata/`: Core classes for automata representation
+- `automata/`: Base classes for automata representation
   - `state.py`: State class
   - `alphabet.py`: Alphabet class
   - `transition.py`: Transition class
@@ -101,5 +103,5 @@ python main.py
   - `word_processing_tab.py`: Tab for word processing and language operations
 - `utils/`: Utility functions
   - `visualization.py`: Functions for visualizing automata
-- `Automates/`: Directory for storing automata JSON files
-- `main.py`: Application entry point 
+- `Automates/`: Directory to store automata JSON files
+- `main.py`: Application entry point
